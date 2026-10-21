@@ -4,7 +4,7 @@ DeepSeek Harness 原生插件：把 [remote-fleet](../remote-fleet) 的远端执
 
 > **一群虎鲸，一个大脑。** 本机决策，机群执行。
 
-> **状态：M6。** 10 个工具可用；审批分级与授权记忆、结构化日志、原子 patch 与回滚均在真实主机（13）上跑通；面板（设置 → Orca 机群）读宿主缓存，打开零 SSH。路线见 [docs/roadmap.md](docs/roadmap.md)。
+> **状态：M6 / 0.8.0。** 10 个工具已有原生对话卡片；会话顶栏「机群」打开右侧栏，可查看主机与任务、读取日志尾、确认停止和撤销授权，打开只读宿主缓存。设置 → Orca 配置展示配置与授权范围。审批分级、结构化日志、原子 patch 与回滚已在真实主机（13）验证。使用说明见 [docs/panel.md](docs/panel.md)，路线见 [docs/roadmap.md](docs/roadmap.md)。
 
 ## 定位
 
@@ -53,7 +53,7 @@ DeepSeek Harness 原生插件：把 [remote-fleet](../remote-fleet) 的远端执
 在 DSH 会话里让 agent 执行（走 `plugin_manager` 的 `install_bundle`，不要手改 profile）：
 
 ```
-安装本地插件 /Users/mengfei/plugins/dsh-orca
+安装本地插件 ~/plugins/dsh-orca
 ```
 
 新 bundle 经 HMR 生效；之后改了代码需重启 DSH。配置覆盖写在 profile 的 `cordis.patch.yml`：
@@ -112,8 +112,25 @@ UPSTREAM.md           冻结点与同步记录
 | [docs/architecture.md](docs/architecture.md) | 组件、数据流、关键决策 |
 | [docs/compatibility.md](docs/compatibility.md) | 必须与上游保持一致的协议 |
 | [docs/engine-changes.md](docs/engine-changes.md) | 冻结引擎相对上游的改动与已知问题 |
+| [docs/ui-design.md](docs/ui-design.md) | 前端设计（M6）：对话卡片、审批文案、右侧栏机群面板、接口与验收 |
 | [docs/policy.md](docs/policy.md) | 免确认策略与审批矩阵 |
 | [docs/logging.md](docs/logging.md) | 结构化日志与 tail 设计 |
 | [docs/panel.md](docs/panel.md) | 面板：缓存模型、接口、成本、已知限制 |
 | [docs/roadmap.md](docs/roadmap.md) | 里程碑与验收标准 |
 | [docs/upstream.md](docs/upstream.md) | 上游同步流程 |
+
+## 许可证
+
+MIT，见 [LICENSE](LICENSE)。第三方来源见 [NOTICE](NOTICE)。
+
+- `engine/remote_fleet_mcp.py` 派生自 remote-fleet v0.7.0（同一作者），偏离点逐条记录在 [docs/engine-changes.md](docs/engine-changes.md)
+- `tests/fixtures/codex_scenarios/` 复刻自 OpenAI Codex，Apache-2.0，见该目录的 `NOTICE`
+
+## 从 GitHub 安装
+
+```bash
+git clone https://github.com/Becomingw/dsh-orca.git ~/plugins/dsh-orca
+```
+
+然后在 DSH 会话里让 agent 安装本地插件 `~/plugins/dsh-orca`（走 `plugin_manager` 的 `install_bundle`）。
+升级即 `git pull` 后重启 DSH。

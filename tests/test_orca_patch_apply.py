@@ -20,10 +20,9 @@ opa = importlib.util.module_from_spec(SPEC)
 assert SPEC.loader is not None
 SPEC.loader.exec_module(opa)
 
-CODEX_BIN = (
-    "/Users/mengfei/n/lib/node_modules/@openai/codex/node_modules/@openai/"
-    "codex-darwin-arm64/vendor/aarch64-apple-darwin/bin/codex"
-)
+# Optional cross-check against a local Codex binary. Set ORCA_CODEX_BIN to the
+# native `codex` executable; the comparison cases skip when it is absent.
+CODEX_BIN = os.environ.get("ORCA_CODEX_BIN", "")
 
 
 def P(*body):

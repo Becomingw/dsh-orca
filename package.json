@@ -1,10 +1,28 @@
 {
   "name": "dsh-orca",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "Remote fleet for DeepSeek Harness: check, read and run on trusted SSH hosts while decisions stay local.",
-  "private": true,
+  "private": false,
   "type": "module",
   "license": "MIT",
+  "keywords": [
+    "dsh",
+    "deepseek-harness",
+    "dsh-plugin",
+    "ssh",
+    "remote",
+    "gpu",
+    "tmux",
+    "fleet"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Becomingw/dsh-orca.git"
+  },
+  "homepage": "https://github.com/Becomingw/dsh-orca#readme",
+  "bugs": {
+    "url": "https://github.com/Becomingw/dsh-orca/issues"
+  },
   "engines": {
     "node": ">=22"
   },
@@ -35,7 +53,10 @@
       "platform": "web",
       "immediately": true,
       "inject": [
-        "@deepseek-ai/dsh-client-ui-slots"
+        "@deepseek-ai/dsh-client-ui-slots",
+        "@deepseek-ai/dsh-client-locale",
+        "@deepseek-ai/dsh-client-ui-tool",
+        "@deepseek-ai/dsh-client-ui-sidebar-right"
       ]
     },
     "manifestVersion": 1

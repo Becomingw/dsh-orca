@@ -100,9 +100,11 @@ test('launch passes the configured structured-log options to the engine', async 
 // (ORCA_DSH_TOOLS=<path to @deepseek-ai/dsh-tools/lib/index.js>).
 test('DSH accepts every tool schema', { skip: !process.env.ORCA_DSH_TOOLS }, async () => {
   const dsh = await import(process.env.ORCA_DSH_TOOLS)
+  const { snapshotJsonValue } = await import(new URL('../../dsh-util-values/lib/index.js', `file://${process.env.ORCA_DSH_TOOLS}`))
   for (const tool of createTools(async () => ({}), { hosts: ['13'], grants: { active: () => [], revoke: () => [] } })) {
     dsh.assertSupportedJsonSchema(tool.parameters)
     dsh.assertSupportedJsonSchema(tool.output.schema)
+    assert.notEqual(snapshotJsonValue(tool.output.presentationMeta({}, {})), undefined, tool.name)
   }
   const patch = createTools(async () => ({})).find((t) => t.name === 'orca_patch')
   const errors = dsh.validateJsonSchemaValue(patch.parameters, { host: 'h', workdir: '/w', patch: 'p', expected_sha256: { 'a.py': null, 'b.py': 'ab' } }, '')

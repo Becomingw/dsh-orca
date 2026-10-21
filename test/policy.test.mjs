@@ -35,7 +35,8 @@ test('run and launch are askOnce keyed by host, normalized workdir and action', 
   const decision = decide(run('python train.py', { workdir: '/data/p/' }), policy, 'ask', noGrants)
   assert.equal(decision.kind, 'askOnce')
   assert.deepEqual(decision.grant, { host: '13', workdir: '/data/p', action: 'run' })
-  assert.match(decision.displayReason.zh, /7 天内/)
+  assert.match(decision.displayReason.zh, /^记住授权 7 天：13:\/data\/p 下的 run/ )
+  assert.match(decision.displayReason.zh, /点击“允许一次”也会建立此授权/)
   assert.equal(decide(call('orca_launch', { session: 's', command: 'x' }), policy, 'ask', noGrants).kind, 'askOnce')
 })
 

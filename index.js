@@ -9,6 +9,8 @@ import { DAY_MS, defaultGrantsPath, GrantStore } from './lib/grants.js'
 import { Observations } from './lib/observations.js'
 import { ACTIONS, decide, DEFAULT_POLICY, deniedReason } from './lib/policy.js'
 import { createTools } from './lib/tools.js'
+import { registerRoutes } from './lib/routes.js'
+import { denial, preflightPatch } from './lib/approval.js'
 
 export const name = 'orca'
 export const inject = ['tools']
@@ -121,9 +123,8 @@ export function apply(ctx, rawConfig) {
     callEngine(tool, args, { signal, env, python: config.python, enginePath: config.enginePath })
 
   const observations = new Observations()
-  for (const tool of createTools(call, { hosts: config.hosts, orcaLog: config.logging, grants, observations })) {
-    ctx.tools.register(tool)
-  }
+  const tools = new Map(createTools(call, { hosts: config.hosts, orcaLog: config.logging, grants, observations }).map(tool => [tool.name, tool]))
+  for (const tool of tools.values()) ctx.tools.register(tool)
 
   const approvalPolicy = (exec) => {
     const approval = ctx.get('approval')
@@ -133,8 +134,10 @@ export function apply(ctx, rawConfig) {
 
   ctx.on('tools/pre-execute', async (exec, next) => {
     if (!(exec.name in ACTIONS)) return next()
-    const decision = decide(exec, config.policy, approvalPolicy(exec), grants)
+    let decision = decide(exec, config.policy, approvalPolicy(exec), grants)
     if (decision.kind === 'pass') return next()
+    if (decision.kind === 'deny') return denial(decision.reason)
+    if (exec.name === 'orca_patch' && decision.kind === 'ask') decision = await preflightPatch(call, exec, decision, observations)
     if (decision.kind === 'askOnce') return askAndRemember(ctx.get('approval'), exec, decision, grants, next)
     return decision
   })
@@ -146,91 +149,13 @@ export function apply(ctx, rawConfig) {
     return typeof command === 'string' ? deniedReason(command, config.policy.deniedCommands) : undefined
   })
 
-  mountPanel(ctx, config, call)
-}
-
-/** JSON helper for the panel routes (same-origin, loopback-only server). */
-function sendJson(response, status, value) {
-  const body = JSON.stringify(value)
-  response.writeHead(status, {
-    'content-type': 'application/json; charset=utf-8',
-    'cache-control': 'no-store',
-  })
-  response.end(body)
-}
-
-/**
- * The Orca panel: one cached snapshot route plus a force-refresh.
- *
- * Polling lives on the host so opening the panel costs no SSH, and shared
- * training hosts only see one scheduled probe per interval.
- */
-function mountPanel(ctx, config, call) {
-  const webServer = (() => {
-    try {
-      return ctx.get?.('webServer') ?? ctx.webServer
-    } catch {
-      return undefined
-    }
-  })()
-  if (webServer === undefined) return
-
-  // An empty `hosts` config means "every concrete ssh alias"; the panel must
-  // still show something, so fall back to discovery instead of mounting nothing.
-  const selected = panelHosts(config.hosts, discoverSshAliases())
-
-  const cache = new FleetCache({
-    hosts: selected.hosts,
-    pollSeconds: config.panel.pollSeconds,
-    jobLimit: config.panel.jobLimit,
-    call: (tool, args) => call(tool, args),
-  })
-
-  ctx.effect(() => {
-    cache.start()
-    const disposers = [
-      webServer.register({
-        kind: 'exact',
-        path: '/dsh-orca/summary',
-        handler: async (request, response) => {
-          if (request.method !== 'GET' && request.method !== 'POST') {
-            response.writeHead(405, { allow: 'GET, POST' })
-            response.end()
-            return
-          }
-          try {
-            const url = new URL(request.url ?? '/', 'http://127.0.0.1')
-            if (url.searchParams.get('refresh') === '1' || request.method === 'POST') {
-              await cache.refresh()
-            }
-            sendJson(response, 200, {
-              ...cache.snapshot(),
-              config: {
-                hosts: config.hosts,
-                panelHosts: selected.hosts,
-                discovered: selected.discovered,
-                pollSeconds: config.panel.pollSeconds,
-                jobLimit: config.panel.jobLimit,
-                allowedCommands: config.policy.allowedCommands,
-                trustedWorkdirs: config.policy.trustedWorkdirs,
-              },
-            })
-          } catch (error) {
-            sendJson(response, 500, { error: error instanceof Error ? error.message : String(error) })
-          }
-        },
-      }),
-    ]
-    return () => {
-      cache.stop()
-      for (const dispose of disposers) {
-        try {
-          dispose()
-        } catch {
-          // already gone
-        }
-      }
-    }
-  })
+  const mount = scope => {
+    const selected = panelHosts(config.hosts, discoverSshAliases())
+    const cache = new FleetCache({ hosts: selected.hosts, pollSeconds: config.panel.pollSeconds,
+      jobLimit: config.panel.jobLimit, call: (tool, args) => call(tool, args) })
+    registerRoutes(scope, { cache, config, selected, tools })
+  }
+  if (typeof ctx.inject === 'function') ctx.inject(['connection'], mount)
+  else if (ctx.get('connection')) mount(ctx)
 }
 

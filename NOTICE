@@ -1,0 +1,23 @@
+dsh-orca
+Copyright (c) 2026 Becomingw
+
+This product includes software derived from the following projects.
+
+--------------------------------------------------------------------------------
+remote-fleet v0.7.0
+https://git.scosine.org/becomingw/remote-fleet.git
+commit 75203016050d272e2521a84d1ef330e1350f6f34
+
+  engine/remote_fleet_mcp.py is a frozen copy of remote-fleet's
+  scripts/remote_fleet_mcp.py, modified for this plugin (see
+  docs/engine-changes.md for the complete list of deviations).
+  Licensed under the MIT License, same copyright holder as this project.
+
+--------------------------------------------------------------------------------
+OpenAI Codex
+https://github.com/openai/codex
+Licensed under the Apache License, Version 2.0
+
+  tests/fixtures/codex_scenarios/ reproduces Codex's apply_patch scenario
+  fixtures to pin byte-for-byte patch semantics. See
+  tests/fixtures/codex_scenarios/NOTICE for the original notice.
