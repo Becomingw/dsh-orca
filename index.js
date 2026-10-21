@@ -7,16 +7,18 @@ import { FleetCache } from './lib/cache.js'
 import { discoverSshAliases, panelHosts } from './lib/discovery.js'
 import { DAY_MS, defaultGrantsPath, GrantStore } from './lib/grants.js'
 import { Observations } from './lib/observations.js'
-import { ACTIONS, decide, DEFAULT_POLICY, deniedReason } from './lib/policy.js'
+import { ACTIONS, decide, deniedReason } from './lib/policy.js'
 import { createTools } from './lib/tools.js'
 import { registerRoutes } from './lib/routes.js'
 import { denial, preflightPatch } from './lib/approval.js'
+
+import { dirname, join } from 'node:path'
+import { normalizePolicy, PolicySettings } from './lib/settings.js'
 
 export const name = 'orca'
 export const inject = ['tools']
 
 const HOST_PATTERN = /^[A-Za-z0-9][A-Za-z0-9_.-]*$/
-const KNOWN_ACTIONS = new Set(Object.values(ACTIONS))
 
 function stringList(value, fallback, label) {
   const list = value ?? fallback
@@ -32,21 +34,6 @@ function integer(value, fallback, label, min, max) {
     throw new TypeError(`orca: ${label} must be an integer in ${min}..${max}`)
   }
   return result
-}
-
-function normalizePolicy(policy = {}) {
-  const normalized = {}
-  for (const key of ['autoAllow', 'askOnce', 'alwaysAsk']) {
-    normalized[key] = stringList(policy[key], DEFAULT_POLICY[key], `config.policy.${key}`)
-    for (const action of normalized[key]) {
-      if (!KNOWN_ACTIONS.has(action)) throw new TypeError(`orca: unknown action ${JSON.stringify(action)} in config.policy.${key}`)
-    }
-  }
-  for (const key of ['allowedCommands', 'deniedCommands', 'trustedWorkdirs']) {
-    normalized[key] = stringList(policy[key], DEFAULT_POLICY[key], `config.policy.${key}`)
-  }
-  normalized.grantTtlDays = integer(policy.grantTtlDays, DEFAULT_POLICY.grantTtlDays, 'config.policy.grantTtlDays', 1, 90)
-  return normalized
 }
 
 function normalizeLogging(logging = {}) {
@@ -74,13 +61,15 @@ export function normalizeConfig(raw = {}) {
     if (!HOST_PATTERN.test(host)) throw new TypeError(`orca: invalid host alias ${JSON.stringify(host)}`)
   }
   if (config.sshPersistSeconds !== undefined) integer(config.sshPersistSeconds, 0, 'config.sshPersistSeconds', 0, 86400)
+  const grantsPath = typeof config.grantsPath === 'string' && config.grantsPath ? config.grantsPath : defaultGrantsPath()
   return {
     hosts,
     python: typeof config.python === 'string' && config.python ? config.python : 'python3',
     enginePath: typeof config.enginePath === 'string' && config.enginePath ? config.enginePath : ENGINE_PATH,
     sshPersistSeconds: config.sshPersistSeconds,
-    grantsPath: typeof config.grantsPath === 'string' && config.grantsPath ? config.grantsPath : defaultGrantsPath(),
+    grantsPath,
     policy: normalizePolicy(config.policy),
+    policyPath: typeof config.policyPath === 'string' && config.policyPath ? config.policyPath : join(dirname(grantsPath), 'policy.json'),
     logging: normalizeLogging(config.logging),
     panel: normalizePanel(config.panel),
   }
@@ -90,7 +79,7 @@ export function normalizeConfig(raw = {}) {
  * Ask through DSH's approval service ourselves so the outcome is known and an
  * askOnce grant can be recorded. Returns a pre-execute decision.
  */
-async function askAndRemember(approval, exec, decision, grants, next) {
+async function askAndRemember(approval, exec, decision, grants, next, ttlMs) {
   if (approval === undefined || exec.agent === undefined) {
     return { kind: 'deny', reason: `${exec.name} requires approval, but no approval channel is available` }
   }
@@ -104,6 +93,8 @@ async function askAndRemember(approval, exec, decision, grants, next) {
   })
   switch (outcome) {
     case 'allowed-once':
+      // Use the duration shown in this approval, even if settings changed while waiting.
+      grants.ttlMs = ttlMs
       grants.grant(decision.grant.host, decision.grant.workdir, decision.grant.action)
       return next()
     case 'rejected':
@@ -117,6 +108,7 @@ async function askAndRemember(approval, exec, decision, grants, next) {
 
 export function apply(ctx, rawConfig) {
   const config = normalizeConfig(rawConfig)
+  const settings = new PolicySettings(config.policyPath, config.policy)
   const env = engineEnv(config)
   const grants = new GrantStore(config.grantsPath, { ttlMs: config.policy.grantTtlDays * DAY_MS })
   const call = (tool, args, signal) =>
@@ -134,26 +126,31 @@ export function apply(ctx, rawConfig) {
 
   ctx.on('tools/pre-execute', async (exec, next) => {
     if (!(exec.name in ACTIONS)) return next()
-    let decision = decide(exec, config.policy, approvalPolicy(exec), grants)
+    let policy
+    try { policy = settings.snapshot().policy } catch { return denial('Orca policy settings could not be read; repair the settings file before executing tools.') }
+    let decision = decide(exec, policy, approvalPolicy(exec), grants)
     if (decision.kind === 'pass') return next()
     if (decision.kind === 'deny') return denial(decision.reason)
     if (exec.name === 'orca_patch' && decision.kind === 'ask') decision = await preflightPatch(call, exec, decision, observations)
-    if (decision.kind === 'askOnce') return askAndRemember(ctx.get('approval'), exec, decision, grants, next)
+    if (decision.kind === 'askOnce') return askAndRemember(ctx.get('approval'), exec, decision, grants, next, policy.grantTtlDays * DAY_MS)
     return decision
   })
 
-  // Monotonic backstop: no later listener can turn a denied command into an allow.
+  // Controlled-mode backstop. Open mode leaves decisions to the remaining pipeline.
   ctx.tools.guard((exec) => {
     if (exec.name !== 'orca_run' && exec.name !== 'orca_launch') return undefined
+    let policy
+    try { policy = settings.snapshot().policy } catch { return 'Orca policy settings could not be read' }
+    if (policy.mode === 'open') return undefined
     const command = exec.arguments?.command
-    return typeof command === 'string' ? deniedReason(command, config.policy.deniedCommands) : undefined
+    return typeof command === 'string' ? deniedReason(command, policy.deniedCommands) : undefined
   })
 
   const mount = scope => {
     const selected = panelHosts(config.hosts, discoverSshAliases())
     const cache = new FleetCache({ hosts: selected.hosts, pollSeconds: config.panel.pollSeconds,
       jobLimit: config.panel.jobLimit, call: (tool, args) => call(tool, args) })
-    registerRoutes(scope, { cache, config, selected, tools })
+    registerRoutes(scope, { cache, config, selected, tools, settings })
   }
   if (typeof ctx.inject === 'function') ctx.inject(['connection'], mount)
   else if (ctx.get('connection')) mount(ctx)

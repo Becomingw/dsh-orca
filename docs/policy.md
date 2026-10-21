@@ -1,12 +1,22 @@
 # 免确认策略（policy）
 
-目标：**日常零打断，红线仍然拦得住。**
+支持**受控模式**与**开放模式**，在设置 → Orca 配置 → 执行授权中选择并保存。默认保持受控模式。
 
-共用训练机上「每个操作都问」不可行——人会被问烦，然后一路点「允许」，等于没有审批。所以把「问不问」从运行时决策变成**安装时声明的策略**。
+共用训练机上「每个操作都问」不可行——人会被问烦，然后一路点「允许」，等于没有审批。策略既可以由配置文件声明，也可以在前端编辑并持久化。
 
 实现：[lib/policy.js](../lib/policy.js)（纯函数判定）、[lib/grants.js](../lib/grants.js)（记忆）、[index.js](../index.js)（接线）。
 
-## 审计矩阵（默认）
+## 前端编辑与开放模式
+
+- **受控模式**（`policy.mode: controlled`）：按下表、命令规则与信任目录处理审批。
+- **开放模式**（`policy.mode: open`）：全部 Orca 工具直接继续 Harness 工具管线；不查黑白名单、信任目录或记忆授权，不由 Orca 发起 run、launch、patch、rollback、stop 等审批。命令 guard 同时关闭。其它插件、Harness 自身权限、主机范围、参数校验、补丁冲突检测与任务身份校验仍然生效。
+- 模式选中只是草稿，点击**保存授权设置**后才生效，作用于后续工具调用；不会取消已在执行或等待审批的调用。切回受控模式时保留之前的规则。
+- 可编辑命令黑白名单、信任目录、各操作审批方式与授权期限（1–90 天）。期限只影响新授权；既有授权不被延长。
+- UI 覆盖存放在 `grantsPath` 同目录的 `policy.json`（默认 `$DSH_HOME/storages/orca/policy.json`，缺省 DSH_HOME 为 `~/.dsh`），可用 `config.policyPath` 指定隔离位置。与 grants 的默认范围一致；多个 profile 如需不同策略，应各自设置独立路径。
+- UI 策略优先于文件中的整个 `policy`。点击**恢复配置文件**并保存会移除覆盖，重新跟随当前 `cordis.patch.yml`。主机和面板探测参数仍由 YAML 配置。
+- 保存为 0600 权限、临时文件加原子替换；读取失败或文件损坏会拒绝工具调用，不回落到较宽松的策略。接口使用 revision 检查，阻止同一宿主中多个窗口的旧草稿覆盖新设置。不要让多个宿主进程同时写同一个策略文件。
+
+## 审计矩阵（受控模式默认）
 
 | 工具 | action | 风险 | 默认档 | 记忆粒度 |
 |---|---|---|---|---|
@@ -28,6 +38,7 @@
   config:
     hosts: ["13", "16", "17", "21"]      # 空 = ~/.ssh/config 里全部具体 Host 别名
     policy:
+      mode: controlled                    # open = Orca 不过滤命令、不请求审批
       autoAllow:   [status, read, grep, ls, grants]
       askOnce:     [run, launch]
       alwaysAsk:   [patch, rollback, stop]
@@ -45,38 +56,39 @@
 
 ```
 tool call (tools/pre-execute)
-  → run/launch 命中 deniedCommands？           → deny（任何模式都拒绝）
+  → policy.mode 是 open？                      → 继续 Harness 管线
+  → run/launch 命中 deniedCommands？           → deny（受控模式）
   → patch 且 dry_run？                          → 放行
   → 档位 = alwaysAsk > askOnce > autoAllow（未列出：只读→auto，写→alwaysAsk；stop 恒为 alwaysAsk）
   → 只读且 auto？                               → 放行
-  → 会话审批策略 never（完全访问）？            → 放行
   → workdir 不在 trustedWorkdirs？              → 改为 alwaysAsk（授权与 allowedCommands 都不生效）
   → auto？                                      → 放行
   → run 且命中 allowedCommands？                → 放行
   → askOnce 且已有有效授权？                    → 放行
+  → 仍需审批且会话策略是 never？                → deny
   → askOnce：插件自己调用 approval.request；批准则记住并放行，拒绝则 deny
   → alwaysAsk：返回 ask，由 DSH 管线询问
 ```
 
-另有一道 `ctx.tools.guard()`：对 run/launch 再查一次 `deniedCommands`。guard 是单调的，其他插件的监听器无法把拒绝翻转为放行。
+受控模式另有一道 `ctx.tools.guard()`：对 run/launch 再查一次 `deniedCommands`。guard 是单调的，其他插件的监听器无法把拒绝翻转为放行。
 
 ### 与 DSH 审批策略的关系
 
-DSH 的 `never` **不是「完全访问」**，而是严格无头模式：它在分发之前确定性地拒绝每个审批请求，不发出提示。插件必须照做，否则就成了绕过会话策略的后门：
+受控模式下，DSH 的 `never` **不是「完全访问」**，而是严格无头模式：它在分发之前确定性地拒绝每个审批请求，不发出提示。插件必须照做，否则就成了绕过会话策略的后门：
 
 | 会话审批策略 | 只读 / 白名单命令 / 已有授权 | 其余写操作 |
 |---|---|---|
 | `ask` | 放行 | 按上表询问 |
 | `never` | 放行 | **拒绝**，并在原因里提示改用 `ask` 或写进 `allowedCommands` |
-| 任意 | — | 命中 `deniedCommands` 一律拒绝 |
+| 任意（受控模式） | — | 命中 `deniedCommands` 一律拒绝 |
 
-要在 `never` 下干活只有两条路：把命令加进 `policy.allowedCommands`，或者先在 `ask` 下批准一次——授权会记住 `grantTtlDays` 天，切回 `never` 后依然有效。
+受控模式中，要执行本来需要审批的命令，可以把命令加进 `policy.allowedCommands`，或者先在 `ask` 下批准一次——授权会记住 `grantTtlDays` 天，切回 `never` 后依然有效。用户还可显式保存开放模式，让 Orca 不再产生审批请求；这不会修改 Harness 的会话策略。
 
 > 2026-10-22 修掉的 P0：早期实现把 `never` 当「完全访问」直接 `pass`，等于把严格无头模式变成无限制模式（实测 `echo`、`mkdir` 未经审批直接执行）。现在只在「本就要询问」的分支上拒绝，只读、白名单、已有授权不受影响。
 
 ### `deniedCommands` 是兜底，不是沙箱
 
-它拦的是明确列出的破坏性命令。默认 `rm -rf /*` 用的是锚定 glob，因此会连带拦住 `rm -rf /home/you/scratch` 这类正常清理——这是有意偏保守。需要删目录时用 `find <dir> -depth -delete`，或把该操作交给审批，不要为了图方便放宽这条规则。
+它拦的是明确列出的破坏性命令。默认 `rm -rf /*` 用的是锚定 glob，因此会连带拦住 `rm -rf /home/you/scratch` 这类正常清理——这是有意偏保守。可在前端根据实际需求编辑规则；命中黑名单的命令不会转为询问。
 
 ### allowedCommands 的切段规则
 
@@ -93,7 +105,7 @@ DSH 的审批结果只有 `allowed-once | rejected | cancelled | unavailable`，
 - 存储：`$DSH_HOME/storages/orca/grants.json`（缺省 `~/.dsh/...`，可用 `config.grantsPath` 改），原子写，权限 0600。每次判定都重新读文件，所以别的会话撤销立即生效。
 - 记忆键：`[host, 规范化 workdir, action]`；默认 7 天过期（`grantTtlDays`，1–90）。
 - 询问文案会写明「批准后 N 天内 host:workdir 下的 action 不再询问」。
-- 撤销：`orca_grants {action: "revoke", host?, workdir?, tool?}`；不带过滤条件撤销全部。`orca_grants` 不能创建授权。M6 面板会提供可视化撤销。
+- 撤销：`orca_grants {action: "revoke", host?, workdir?, tool?}`；不带过滤条件撤销全部。`orca_grants` 不能创建授权。机群面板提供可视化撤销。
 - 拒绝不会被记住；`orca_stop` 永不记忆。
 
 ## 尚未实现

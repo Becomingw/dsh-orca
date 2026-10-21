@@ -8,6 +8,8 @@
         hosts: []
         python: python3
         policy:
+          # UI settings override this policy until "Use config file" is saved.
+          mode: controlled   # open: no Orca command filtering or approval prompts
           allowedCommands:
             - nvidia-smi
             - nvidia-smi *

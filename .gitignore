@@ -3,3 +3,5 @@ node_modules/
 .DS_Store
 engine/__pycache__/
 *.pyc
+.venv/
+.pytest_cache/

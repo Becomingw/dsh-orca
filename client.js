@@ -6,7 +6,7 @@ window.__ModuleLoader__.load({
     const h = React.createElement
     const { useState, useEffect, useRef, useSyncExternalStore } = React
     const words = {
-      fleet: ['机群', 'Fleet'], config: ['Orca 配置', 'Orca settings'], guide: ['主机状态、已登记任务与授权', 'Hosts, registered jobs and approvals'],
+      fleet: ['机群', 'Fleet'], fleetTitle: ['Orca 机群', 'Orca Fleet'], fleetSubtitle: ['远程主机与任务', 'Remote hosts and jobs'], configSubtitle: ['当前生效的连接与授权范围', 'Active connections and approval scope'], activeJobs: ['运行任务', 'Running jobs'], coverageShort: ['每台最近 {n} 条登记', 'Latest {n} records per host'], config: ['Orca 配置', 'Orca settings'], guide: ['主机状态、已登记任务与授权', 'Hosts, registered jobs and approvals'],
       hosts: ['主机', 'Hosts'], runningJobs: ['已知运行任务', 'Known running jobs'], recentJobs: ['最近结束与未知状态', 'Recent and unknown jobs'], grants: ['已记住的授权', 'Remembered approvals'],
       refresh: ['刷新主机', 'Refresh hosts'], refreshing: ['刷新中…', 'Refreshing…'], loading: ['读取中…', 'Loading…'], retry: ['重试', 'Retry'],
       reachable: ['最近探测成功', 'Last probe succeeded'], unreachable: ['无法连接', 'Unreachable'], unpolled: ['尚未探测', 'Not checked'], stale: ['数据已过期', 'Stale data'],
@@ -48,29 +48,48 @@ window.__ModuleLoader__.load({
       progressHint: ['执行期间不提供流式输出；结束后显示结果。', 'Output is available when the command finishes; it is not streamed.'],
       started: ['开始', 'Started'], finished: ['结束', 'Finished'], scope: ['范围', 'Scope'], dismiss: ['关闭提示', 'Dismiss'],
     }
+    Object.assign(words, {
+      authorization: ['执行授权', 'Execution permissions'], controlled: ['受控模式', 'Controlled mode'], open: ['开放模式', 'Open mode'],
+      controlledHelp: ['按命令规则、信任目录与操作类别审批', 'Use command rules, trusted directories and per-action approvals'],
+      openHelp: ['所有 Orca 操作免询问，命令不再拦截', 'No Orca prompts or command filtering for any Orca action'],
+      openScope: ['开放模式下，Orca 不检查命令黑白名单、信任目录或授权记录，也不为执行、修改、回滚和停止操作请求审批。Harness 自身权限、主机范围与工具参数校验仍然生效。', 'In open mode, Orca skips command lists, trusted directories, remembered grants and approval prompts, including patch, rollback and stop. Harness permissions, configured hosts and tool validation still apply.'],
+      activeMode: ['当前生效：{mode}', 'Active: {mode}'], pendingPolicy: ['有未保存的更改', 'Unsaved changes'], policySaved: ['已保存，后续工具调用立即使用新策略', 'Saved. Subsequent tool calls use the new policy.'],
+      savePolicy: ['保存授权设置', 'Save permissions'], savingPolicy: ['保存中…', 'Saving…'], reloadPolicy: ['重新读取已保存设置', 'Reload saved settings'],
+      resetPolicy: ['恢复配置文件', 'Use config file'], resetDraft: ['已载入配置文件中的策略，点击保存后生效。', 'Config-file policy loaded into the draft. Save to apply.'],
+      policySource: ['来源：{source} · 保存后立即生效，重启后保留', 'Source: {source} · Applies on save and persists across restarts'], uiSource: ['前端设置', 'UI settings'], fileSource: ['配置文件', 'Config file'],
+      policyFooter: ['前端保存的授权策略优先于配置文件；“恢复配置文件”并保存后重新使用文件配置。主机与探测间隔仍在 cordis.patch.yml 中设置。', 'Saved UI permissions override the config-file policy. Use “Use config file” and save to remove the override. Hosts and probe intervals remain in cordis.patch.yml.'],
+      policyRules: ['受控模式规则', 'Controlled-mode rules'], rulesInactive: ['规则已保留，在切回受控模式后生效。', 'Rules are retained and apply when you return to controlled mode.'],
+      denylist: ['拦截命令', 'Blocked commands'], commandHelp: ['每行一条 glob 规则，支持 * 和 ?。免询问仅用于执行命令；拦截同时用于执行与启动任务。', 'One glob per line; * and ? supported. Pre-approved rules apply to run; blocked rules apply to run and launch.'],
+      directoryHelp: ['每行一个绝对路径或 glob。留空表示不限制；目录外的写操作仍需审批。', 'One absolute path or glob per line. Empty means unrestricted; writes outside these paths require approval.'],
+      actionTiers: ['各操作的审批方式', 'Approval by action'], autoAllow: ['免询问', 'No prompt'], askOnce: ['首次询问并记住', 'Ask once and remember'], alwaysAsk: ['每次询问', 'Ask every time'],
+      stopPolicyHelp: ['受控模式下，停止任务固定为每次询问。', 'In controlled mode, stop always requires approval.'], ttl: ['记忆授权期限（天）', 'Remember approvals (days)'], ttlHelp: ['1–90 天，仅用于新建立的授权。已有授权保留原到期时间。', '1–90 days, for new grants only. Existing grants keep their expiry.'],
+      policyInvalid: ['授权期限必须为 1–90 的整数。', 'Approval duration must be an integer from 1 to 90.'],
+    })
     const zh = Object.fromEntries(Object.entries(words).map(([key, v]) => [key, v[0]]))
     const en = Object.fromEntries(Object.entries(words).map(([key, v]) => [key, v[1]]))
     const tr = (t, key, params = {}) => String(t(key)).replace(/\{(\w+)\}/g, (_, k) => params[k] ?? `{${k}}`)
     const CSS = `
-.orca-root{color:var(--dsw-alias-label-primary);font-size:13px;line-height:1.55;min-width:0;box-sizing:border-box;font-variant-numeric:tabular-nums}
-.orca-root *{box-sizing:border-box}.orca-panel{height:100%;overflow:auto;padding:18px 18px 28px;container-type:inline-size}.orca-settings{max-width:780px;padding:8px 0 20px}
-.orca-root button{font:inherit;color:inherit;cursor:pointer}.orca-root button:disabled{cursor:default;opacity:.5}.orca-root button:focus-visible,.orca-root summary:focus-visible{outline:2px solid var(--dsw-alias-state-business-primary);outline-offset:3px}
-.orca-muted{color:var(--dsw-alias-label-secondary);font-size:12px}.orca-caption{color:var(--dsw-alias-label-tertiary);font-size:12px}.orca-mono{font-family:var(--dsw-font-mono,monospace)}
-.orca-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}.orca-toolbar h3{margin:0;font-size:16px;font-weight:600}.orca-toolbar p{margin:4px 0 0}
-.orca-btn{display:inline-flex;gap:6px;align-items:center;justify-content:center;min-height:30px;padding:4px 10px;border:1px solid var(--dsw-alias-border-l2);border-radius:var(--dsw-radius-sm,8px);background:transparent;white-space:nowrap}.orca-btn:hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover)}.orca-btn.quiet{border-color:transparent}.orca-btn.danger{color:var(--dsw-alias-state-error-primary)}
-.orca-section{margin-top:24px}.orca-section>h4{font-size:12px;letter-spacing:.02em;font-weight:600;color:var(--dsw-alias-label-secondary);margin:0 0 10px;display:flex;justify-content:space-between;gap:8px}.orca-section-count{font-weight:400}
-.orca-row{padding:12px 0;border-bottom:1px solid var(--dsw-alias-border-l3);min-width:0}.orca-row:last-child{border-bottom:0}.orca-row summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:9px;min-height:28px}.orca-row summary::-webkit-details-marker{display:none}.orca-row summary:after{content:'›';margin-left:auto;color:var(--dsw-alias-label-tertiary)}.orca-row[open]>summary:after{transform:rotate(90deg)}
-.orca-identity{display:inline-flex;align-items:center;gap:6px;font-family:var(--dsw-font-mono,monospace);font-size:12px;font-weight:600;flex-shrink:0}.orca-identity svg{width:15px;height:15px;color:var(--dsw-alias-label-secondary)}.orca-host-info{min-width:0;flex:1}.orca-host-info>div{overflow-wrap:anywhere}.orca-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--dsw-alias-label-tertiary);flex:none}.orca-dot.error{background:var(--dsw-alias-state-error-primary)}
-.orca-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;line-height:1.5;padding:2px 7px;border:1px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-sm,8px);white-space:nowrap;color:var(--dsw-alias-label-secondary);max-width:100%}.orca-badge.error,.orca-error{color:var(--dsw-alias-state-error-primary)}.orca-badge.warn,.orca-warn{color:var(--dsw-alias-state-warn-label)}
-.orca-notice{font-size:12px;padding:10px 12px;border-left:2px solid var(--dsw-alias-border-l2);background:var(--dsw-alias-bg-layer-2);border-radius:0 var(--dsw-radius-sm,8px) var(--dsw-radius-sm,8px) 0;margin:10px 0;overflow-wrap:anywhere}.orca-notice.error{border-left-color:var(--dsw-alias-state-error-primary)}.orca-notice.warn{border-left-color:var(--dsw-alias-state-warn-primary)}
-.orca-empty{padding:14px 0;color:var(--dsw-alias-label-secondary);font-size:12px;overflow-wrap:anywhere}.orca-kv{display:grid;grid-template-columns:minmax(70px,auto) minmax(0,1fr);gap:7px 14px;font-size:12px;margin:12px 0}.orca-kv dt{color:var(--dsw-alias-label-secondary)}.orca-kv dd{margin:0;text-align:right;overflow-wrap:anywhere}
-.orca-gpus{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}.orca-gpu{flex:1 1 64px;max-width:110px;font-size:11px;color:var(--dsw-alias-label-secondary)}.orca-meter{height:4px;background:var(--dsw-alias-bg-layer-2);border-radius:2px;overflow:hidden;margin:4px 0}.orca-meter>i{height:100%;display:block;background:var(--dsw-alias-label-secondary)}
-.orca-job-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}.orca-job-name{font-size:13px;font-weight:500;overflow-wrap:anywhere}.orca-job-meta{display:flex;flex-wrap:wrap;gap:4px 8px;font-size:12px;color:var(--dsw-alias-label-secondary);margin-top:4px}.orca-job-actions{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}.orca-confirm{padding:10px 12px;background:var(--dsw-alias-bg-layer-2);border-radius:var(--dsw-radius-sm,8px);margin-top:10px}.orca-confirm p{margin:0 0 8px;overflow-wrap:anywhere}.orca-highlight{border-left:2px solid var(--dsw-alias-state-business-primary);padding-left:10px}
-.orca-pre{font:12px/1.65 var(--dsw-font-mono,monospace);white-space:pre;overflow:auto;max-height:320px;padding:12px;margin:8px 0;background:var(--dsw-alias-bg-layer-2);border-radius:var(--dsw-radius-sm,8px);tab-size:4}.orca-pre.full{max-height:none}.orca-pre.wrap{white-space:pre-wrap;overflow-wrap:anywhere}.orca-log-preview{font:11px/1.5 var(--dsw-font-mono,monospace);color:var(--dsw-alias-label-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:6px}
-.orca-tool{border:1px solid var(--dsw-alias-border-l3);border-radius:var(--dsw-radius-md,10px);margin:6px 0;overflow:hidden;container-type:inline-size}.orca-tool-head{display:flex;align-items:flex-start;gap:8px;padding:10px 12px}.orca-toggle{border:0;background:transparent;text-align:left;padding:0;min-width:0;flex:1;display:flex;align-items:flex-start;gap:9px}.orca-tool-title{min-width:0;flex:1}.orca-tool-title strong{font-size:13px;font-weight:500;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.orca-tool-path{font-size:11px;color:var(--dsw-alias-label-tertiary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.orca-tool-body{padding:0 12px 12px;border-top:1px solid var(--dsw-alias-border-l3);overflow-wrap:anywhere}.orca-tool-body>.orca-toolbar{margin-top:10px;margin-bottom:4px}.orca-tool-actions{display:flex;flex-wrap:wrap;gap:6px}.orca-line{display:block;min-height:1.65em}.orca-line.add{background:color-mix(in srgb,var(--dsw-alias-state-success-primary) 12%,transparent)}.orca-line.del{background:color-mix(in srgb,var(--dsw-alias-state-error-primary) 12%,transparent)}.orca-line.hunk{color:var(--dsw-alias-label-tertiary)}.orca-number{display:inline-block;min-width:4.5em;padding-right:12px;text-align:right;user-select:none;color:var(--dsw-alias-label-tertiary)}.orca-match{background:color-mix(in srgb,var(--dsw-alias-state-business-primary) 12%,transparent)}.orca-root mark{background:color-mix(in srgb,var(--dsw-alias-state-warn-primary) 25%,transparent);color:inherit}.orca-file{margin:10px 0 4px;font:12px var(--dsw-font-mono,monospace);overflow-wrap:anywhere}.orca-chip-list{display:flex;flex-wrap:wrap;gap:6px}.orca-chip{padding:4px 8px;background:var(--dsw-alias-bg-layer-2);border-radius:var(--dsw-radius-sm,8px);font:12px var(--dsw-font-mono,monospace);overflow-wrap:anywhere;max-width:100%}
-.orca-header{display:inline-flex;gap:6px;align-items:center;min-height:28px}.orca-spinner{width:11px;height:11px;border:1.5px solid var(--dsw-alias-border-l2);border-top-color:currentColor;border-radius:50%;animation:orca-spin 1s linear infinite;display:inline-block;flex-shrink:0}@keyframes orca-spin{to{transform:rotate(360deg)}}
-@container(max-width:360px){.orca-tool-head{flex-wrap:wrap}.orca-tool-head>.orca-badge{margin-left:24px}.orca-kv{grid-template-columns:1fr}.orca-kv dd{text-align:left}.orca-job-head{flex-wrap:wrap}.orca-toolbar{align-items:flex-start}.orca-tool-path{white-space:normal;overflow-wrap:anywhere}}
-@media(prefers-reduced-motion:reduce){.orca-spinner{animation:none}}
+.orca-root{--orca-text:var(--dsw-alias-label-primary-bluish,var(--dsw-alias-label-primary));--orca-muted:var(--dsw-alias-label-secondary);--orca-surface:var(--dsw-alias-bg-base);--orca-soft:var(--dsw-alias-bg-layer-2);--orca-line:var(--dsw-alias-border-l3);--orca-accent:color-mix(in srgb,var(--dsw-alias-state-business-primary) 38%,var(--dsw-alias-state-success-primary));--orca-tint:color-mix(in srgb,var(--orca-accent) 8%,var(--orca-surface));color:var(--orca-text);font-family:var(--dsw-font-family,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif);font-size:13px;line-height:1.55;min-width:0;box-sizing:border-box;font-variant-numeric:tabular-nums}
+.orca-root *{box-sizing:border-box}.orca-root.orca-root h3,.orca-root.orca-root h4{font-family:inherit;font-weight:650;line-height:1.4}.orca-panel{height:100%;overflow:auto;padding:22px 20px 28px;container-type:inline-size;background:color-mix(in srgb,var(--orca-surface) 97%,var(--orca-accent))}.orca-settings{max-width:780px;padding:8px 0 24px;container-type:inline-size}
+.orca-root button{font:inherit;color:inherit;cursor:pointer}.orca-root button:disabled{cursor:default;opacity:.5}.orca-root button:focus-visible,.orca-root summary:focus-visible,.orca-root pre:focus-visible{outline:2px solid var(--orca-accent);outline-offset:3px}.orca-icon{width:16px;height:16px;flex:none;vertical-align:middle}.orca-mark{width:38px;height:38px;flex:none;display:block}.orca-brand{display:flex;gap:11px;align-items:center;min-width:0}.orca-brand h3{font-size:20px;font-weight:650;letter-spacing:-.5px;line-height:1.25;margin:0}.orca-brand p{margin:3px 0 0}.orca-muted{color:var(--orca-muted);font-size:12px}.orca-caption{color:var(--orca-muted);font-size:11px}.orca-mono{font-family:var(--dsw-font-mono,ui-monospace,monospace)}
+.orca-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:16px}.orca-toolbar h3{margin:0}.orca-toolbar p{margin:3px 0 0}.orca-btn{display:inline-flex;gap:6px;align-items:center;justify-content:center;min-height:30px;padding:5px 10px;border:1px solid var(--dsw-alias-border-l2);border-radius:7px;background:var(--orca-surface);white-space:nowrap;font-size:12px!important;font-weight:500!important;transition:background 140ms,border-color 140ms,color 140ms}.orca-btn:hover:not(:disabled){background:var(--orca-tint);border-color:color-mix(in srgb,var(--orca-accent) 45%,var(--orca-line))}.orca-btn.quiet{background:transparent;border-color:transparent}.orca-btn.primary{color:var(--orca-accent);border-color:color-mix(in srgb,var(--orca-accent) 45%,var(--orca-line))}.orca-btn.danger{color:var(--dsw-alias-state-error-primary);border-color:color-mix(in srgb,var(--dsw-alias-state-error-primary) 35%,var(--orca-line))}
+.orca-overview{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));padding:16px 0;background:var(--orca-surface);border:1px solid var(--orca-line);border-radius:12px;margin:0}.orca-overview>div{display:flex;flex-direction:column-reverse;min-width:0;padding:0 12px;text-align:center;border-right:1px solid var(--orca-line)}.orca-overview>div:last-child{border:0}.orca-overview dt{font-size:11px;color:var(--orca-muted);margin-top:3px}.orca-overview dd{font-size:26px;line-height:1.2;letter-spacing:-.8px;font-weight:650;margin:0;color:var(--orca-accent)}.orca-overview .warn dd{color:var(--dsw-alias-state-warn-label)}.orca-sync{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-top:10px;font-size:11px;color:var(--orca-muted)}.orca-sync>span{display:flex;gap:5px;align-items:center}.orca-sync .orca-icon{width:13px;height:13px}
+.orca-section{margin-top:22px}.orca-section>h4{font-size:13px;font-weight:650;margin:0 0 10px;display:flex;align-items:center;gap:7px}.orca-section-count{font-size:11px;line-height:20px;font-weight:550;padding:0 6px;border-radius:5px;background:var(--orca-soft);color:var(--orca-muted)}.orca-hosts{border:1px solid var(--orca-line);border-radius:12px;overflow:hidden;background:var(--orca-surface)}
+.orca-row{padding:12px 0;border-bottom:1px solid var(--orca-line);min-width:0}.orca-row:last-child{border-bottom:0}.orca-row summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:10px;min-height:28px}.orca-row summary::-webkit-details-marker{display:none}.orca-chevron{margin-left:auto;color:var(--orca-muted);transition:transform 160ms;width:16px;height:16px;flex:none}.orca-row[open]>summary>.orca-chevron{transform:rotate(90deg)}.orca-host{padding:0}.orca-host>summary{padding:12px 14px;transition:background 140ms}.orca-host>summary:hover{background:var(--orca-tint)}.orca-host[open]>summary{background:color-mix(in srgb,var(--orca-tint) 50%,var(--orca-surface))}.orca-host-detail{padding:0 14px 14px;border-top:1px solid var(--orca-line)}.orca-host-detail>.orca-caption{margin-top:8px}.orca-icon-box{display:inline-flex;width:32px;height:32px;align-items:center;justify-content:center;border-radius:8px;background:var(--orca-soft);color:var(--orca-muted);flex:none}.orca-icon-box>.orca-icon{width:18px;height:18px}.orca-icon-box.terminal{background:var(--orca-tint);color:var(--orca-accent)}
+.orca-identity{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;flex-shrink:0}.orca-host-info{min-width:0;flex:1}.orca-host-info>div{overflow-wrap:anywhere}.orca-host-info>.orca-identity{font-size:13px}.orca-host-state{display:flex;align-items:center;gap:5px}.orca-dot{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--dsw-alias-label-tertiary);flex:none}.orca-dot.error{background:var(--dsw-alias-state-error-primary)}.orca-dot.good{background:var(--dsw-alias-state-success-primary)}
+.orca-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:500;line-height:1.5;padding:3px 7px;border:0;border-radius:6px;white-space:nowrap;color:var(--orca-muted);background:var(--orca-soft);max-width:100%}.orca-badge>.orca-icon{width:13px;height:13px}.orca-badge.good{color:var(--dsw-alias-state-success-primary);background:color-mix(in srgb,var(--dsw-alias-state-success-primary) 9%,var(--orca-surface))}.orca-badge.error,.orca-error{color:var(--dsw-alias-state-error-primary)}.orca-badge.error{background:color-mix(in srgb,var(--dsw-alias-state-error-primary) 8%,var(--orca-surface))}.orca-badge.warn,.orca-warn{color:var(--dsw-alias-state-warn-label)}.orca-badge.warn{background:color-mix(in srgb,var(--dsw-alias-state-warn-primary) 10%,var(--orca-surface))}.orca-notice{font-size:12px;padding:10px 12px;border:1px solid var(--orca-line);background:var(--orca-tint);border-radius:8px;margin:10px 0;overflow-wrap:anywhere}.orca-notice.error{color:var(--dsw-alias-state-error-primary);background:color-mix(in srgb,var(--dsw-alias-state-error-primary) 6%,var(--orca-surface));border-color:color-mix(in srgb,var(--dsw-alias-state-error-primary) 20%,var(--orca-line))}.orca-notice.warn{background:color-mix(in srgb,var(--dsw-alias-state-warn-primary) 7%,var(--orca-surface))}.orca-empty{padding:18px 14px;color:var(--orca-muted);font-size:12px;overflow-wrap:anywhere;border:1px dashed var(--dsw-alias-border-l2);border-radius:10px;text-align:center}.orca-empty>.orca-icon{display:block;margin:0 auto 6px;width:22px;height:22px;color:var(--dsw-alias-label-tertiary)}
+.orca-kv{display:grid;grid-template-columns:minmax(70px,auto) minmax(0,1fr);gap:7px 14px;font-size:12px;margin:12px 0}.orca-kv dt{color:var(--orca-muted)}.orca-kv dd{margin:0;text-align:right;overflow-wrap:anywhere}.orca-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));margin:14px 0;gap:10px}.orca-metrics>div{min-width:0;border-right:1px solid var(--orca-line);padding-right:8px}.orca-metrics>div:last-child{border:0;padding:0}.orca-metrics dt{font-size:11px;color:var(--orca-muted);margin-bottom:4px}.orca-metrics dd{font-size:12px;font-weight:550;line-height:1.5;margin:0;overflow-wrap:anywhere}.orca-gpu-heading{border-top:1px solid var(--orca-line);padding-top:12px;font-size:12px;font-weight:550;margin-top:10px}.orca-gpus{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px 10px;margin:12px 0 2px}.orca-gpu{font-size:10px;color:var(--orca-muted);min-width:0}.orca-gpu-label{display:flex;justify-content:space-between;gap:3px;font-size:11px;color:var(--orca-text)}.orca-meter{height:5px;background:var(--orca-soft);border-radius:3px;overflow:hidden;margin:5px 0}.orca-meter>i{height:100%;display:block;background:var(--orca-accent);border-radius:3px;transition:width 180ms}.orca-gpu-memory{font-size:10px;white-space:nowrap}
+.orca-job{padding:13px 14px;border:1px solid var(--orca-line)!important;border-radius:12px;background:var(--orca-surface);margin:8px 0}.orca-job.active{border-left:3px solid var(--orca-accent)!important}.orca-job-head{display:flex;align-items:center;justify-content:space-between;gap:8px}.orca-job-title{display:flex;align-items:center;gap:9px;min-width:0;flex:1}.orca-job-name{font-size:13px;font-weight:600;overflow-wrap:anywhere;min-width:0}.orca-job-meta{display:flex;flex-wrap:wrap;gap:4px 7px;font-size:11px;color:var(--orca-muted);margin-top:3px}.orca-job-actions{display:flex;gap:7px;margin-top:10px;flex-wrap:wrap}.orca-confirm{padding:12px;background:var(--orca-soft);border:1px solid var(--orca-line);border-radius:8px;margin-top:12px}.orca-confirm p{margin:0 0 8px;overflow-wrap:anywhere}.orca-highlight{outline:2px solid var(--orca-accent);outline-offset:2px}
+.orca-pre{font:12px/1.65 var(--dsw-font-mono,ui-monospace,monospace);white-space:pre;overflow:auto;max-height:320px;padding:12px;margin:10px 0;background:var(--orca-soft);border:1px solid var(--orca-line);border-radius:8px;tab-size:4}.orca-pre.full{max-height:none}.orca-pre.wrap{white-space:pre-wrap;overflow-wrap:anywhere}.orca-log-preview{font:11px/1.65 var(--dsw-font-mono,ui-monospace,monospace);color:#f4f9fc;background:#102d46;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:12px;padding:8px 10px;border-radius:7px}.orca-history{padding:12px 14px;background:var(--orca-surface);border:1px solid var(--orca-line)!important;border-radius:10px}.orca-history>summary{min-height:20px;font-size:12px}
+.orca-tool{border:1px solid var(--orca-line);border-radius:12px;background:var(--orca-surface);margin:8px 0;overflow:hidden;container-type:inline-size}.orca-tool-head{padding:12px}.orca-toggle{border:0;background:transparent;text-align:left;padding:0;width:100%;display:flex;align-items:center;gap:10px;min-width:0}.orca-toggle>.orca-chevron{margin-left:0}.orca-toggle[aria-expanded=true]>.orca-chevron{transform:rotate(90deg)}.orca-tool-title{min-width:0;flex:1}.orca-tool-title>.orca-identity{font-size:13px;font-weight:600;line-height:1.5}.orca-tool-title strong{font-size:12px;font-weight:400;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:3px;color:var(--orca-muted)}.orca-tool-path{font-size:11px;color:var(--orca-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}.orca-tool-body{padding:0 12px 12px;border-top:1px solid var(--orca-line);overflow-wrap:anywhere}.orca-tool-body>.orca-toolbar{margin-top:10px;margin-bottom:4px}.orca-tool-actions{display:flex;flex-wrap:wrap;gap:6px}.orca-tool-actions .orca-btn{font-size:11px!important;min-height:28px;padding:4px 7px}.orca-line{display:block;min-height:1.65em}.orca-line.add{background:var(--dsw-alias-file-diff-added-bg)}.orca-line.del{background:var(--dsw-alias-file-diff-deleted-bg)}.orca-line.hunk{color:var(--orca-muted)}.orca-number{display:inline-block;min-width:4.5em;padding-right:12px;text-align:right;user-select:none;color:var(--dsw-alias-label-tertiary)}.orca-match{background:var(--orca-tint)}.orca-root mark{background:color-mix(in srgb,var(--dsw-alias-state-warn-primary) 25%,transparent);color:inherit}.orca-file{margin:10px 0 4px;font:12px var(--dsw-font-mono,monospace);overflow-wrap:anywhere}.orca-chip-list{display:flex;flex-wrap:wrap;gap:8px;padding:12px;background:var(--orca-surface);border:1px solid var(--orca-line);border-radius:10px}.orca-chip{padding:5px 9px;background:var(--orca-soft);border-radius:6px;font:12px/1.5 var(--dsw-font-mono,monospace);overflow-wrap:anywhere;max-width:100%}.orca-settings-summary{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--orca-line);border-radius:12px;padding:16px;margin-top:16px;gap:16px;background:var(--orca-surface)}.orca-settings-summary>div{display:flex;gap:10px;align-items:center}.orca-settings-summary .orca-icon{width:20px;height:20px;color:var(--orca-muted)}.orca-settings-summary strong{display:block;font-size:17px;color:var(--orca-accent);font-weight:600;margin-top:3px}.orca-settings-footer{display:flex;gap:8px;align-items:flex-start;margin-top:24px;border-top:1px solid var(--orca-line);padding-top:14px}
+.orca-header{display:inline-flex;gap:6px;align-items:center;min-height:28px}.orca-header .orca-mark{width:22px;height:22px}.orca-spinner{width:11px;height:11px;border:1.5px solid var(--dsw-alias-border-l2);border-top-color:currentColor;border-radius:50%;animation:orca-spin 1s linear infinite;display:inline-block;flex-shrink:0}@keyframes orca-spin{to{transform:rotate(360deg)}}
+@container(max-width:420px){.orca-overview dd{font-size:23px}.orca-overview>div{padding:0 8px}.orca-overview dt{font-size:10px}.orca-metrics{grid-template-columns:1fr}.orca-metrics>div{border:0;padding:0;display:flex;justify-content:space-between;gap:12px}.orca-metrics dt{margin:0}.orca-gpus{grid-template-columns:repeat(2,minmax(0,1fr))}.orca-host>summary{gap:8px;padding:11px}.orca-host>summary>.orca-badge{font-size:10px;padding:3px 5px}.orca-brand h3{font-size:18px}.orca-tool-title>.orca-identity{font-size:12px}.orca-tool .orca-icon-box{width:28px;height:28px}.orca-tool-head{padding:10px}.orca-toggle{gap:8px}.orca-tool-title strong{white-space:normal;overflow-wrap:anywhere}}
+.orca-policy-modes{display:grid;grid-template-columns:1fr 1fr;gap:10px}.orca-mode{display:flex;align-items:flex-start;gap:10px;padding:15px;border:1px solid var(--orca-line);border-radius:10px;background:var(--orca-surface);cursor:pointer}.orca-mode.selected{border-color:var(--orca-accent);background:var(--orca-tint)}.orca-mode input{margin:4px 0 0;accent-color:var(--orca-accent);flex:none}.orca-mode strong{display:block;font-size:14px;margin-bottom:3px}.orca-mode small{display:block;color:var(--orca-muted);font-size:12px}.orca-policy-status{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin:12px 0}.orca-policy-actions{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}.orca-policy-rules{margin-top:20px;border:1px solid var(--orca-line);border-radius:10px;padding:14px;background:var(--orca-surface)}.orca-policy-rules>summary{cursor:pointer;font-weight:600}.orca-policy-fields{border:0;padding:0;margin:12px 0 0;min-width:0}.orca-policy-fields:disabled{opacity:.55}.orca-field{display:flex;flex-direction:column;gap:6px;margin:16px 0;font-size:12px;font-weight:550}.orca-field small{font-weight:400;color:var(--orca-muted)}.orca-input{width:100%;min-width:0;border:1px solid var(--orca-line);border-radius:7px;padding:9px 10px;background:var(--orca-surface);color:var(--orca-text);font:inherit}.orca-input:focus-visible,.orca-mode input:focus-visible{outline:2px solid var(--orca-accent);outline-offset:2px}textarea.orca-input{resize:vertical;line-height:1.6;min-height:86px;font-family:var(--dsw-font-mono,monospace)}.orca-tier-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--orca-line)}.orca-tier-row .orca-input{width:190px;max-width:55%}.orca-policy-fields input[type=number]{max-width:150px}
+/* The host settings shell keeps a fixed nav rail; give this section usable room on phones. */
+@media(max-width:600px){[data-shortcut-modal="settings"]:has(.orca-settings){flex-direction:column!important;width:calc(100vw - 24px)!important;height:calc(100dvh - 24px)!important;max-height:calc(100dvh - 24px)!important}[data-shortcut-modal="settings"]:has(.orca-settings)>nav{width:100%!important;min-width:0!important;flex:0 0 auto!important;padding:12px!important;max-height:110px}[data-shortcut-modal="settings"]:has(.orca-settings)>nav>div:last-child{display:flex!important;flex-direction:row!important;overflow:auto;gap:4px}[data-shortcut-modal="settings"]:has(.orca-settings)>nav button{flex-shrink:0!important;width:auto!important}[data-shortcut-modal="settings"]:has(.orca-settings)>div{min-height:0;min-width:0;width:100%}.orca-settings{padding:8px 0 20px}}
+@container(max-width:440px){.orca-policy-modes{grid-template-columns:1fr}.orca-policy-status{align-items:flex-start}.orca-tier-row .orca-input{max-width:60%;width:165px}}
+@container(max-width:320px){.orca-brand .orca-mark{width:30px;height:30px}.orca-toolbar{align-items:flex-start}.orca-overview dd{font-size:20px}.orca-host>summary{flex-wrap:wrap}.orca-host>summary>.orca-host-info{flex-basis:calc(100% - 64px)}.orca-host>summary>.orca-badge{margin-left:40px}.orca-job-head{flex-wrap:wrap}.orca-tool .orca-toggle{flex-wrap:wrap}.orca-tool .orca-tool-title{flex-basis:calc(100% - 40px)}.orca-tool .orca-toggle>.orca-badge{margin-left:36px}.orca-settings-summary{grid-template-columns:1fr}.orca-kv{grid-template-columns:1fr}.orca-kv dd{text-align:left}}
+@media(prefers-reduced-motion:reduce){.orca-root *{transition:none!important}.orca-spinner{animation:none}}
 `
     const bytes = n => {
       if (typeof n !== 'number' || !Number.isFinite(n)) return '—'
@@ -88,21 +107,30 @@ window.__ModuleLoader__.load({
       return h('time', { dateTime: new Date(at).toISOString(), title: absolute(at) }, new Intl.RelativeTimeFormat(locale, { numeric: 'auto' }).format(-amount, unit))
     }
     const diskLow = disk => disk?.total_bytes > 0 && (disk.free_bytes / disk.total_bytes < .05 || disk.free_bytes < 20 * 1024 ** 3)
-    function ServerIcon() {
-      return h('svg', { viewBox: '0 0 20 20', fill: 'none', stroke: 'currentColor', strokeWidth: 1.4, 'aria-hidden': true }, [
-        h('rect', { key: 'a', x: 3, y: 3, width: 14, height: 6, rx: 1.5 }), h('rect', { key: 'b', x: 3, y: 11, width: 14, height: 6, rx: 1.5 }),
-        h('path', { key: 'c', d: 'M6 6h.1M6 14h.1M10 6h4M10 14h4', strokeLinecap: 'round' }),
-      ])
+    const iconPaths = {'server': 'M4 3.5h12v5H4zM4 11.5h12v5H4zM6.5 6h.01M6.5 14h.01M10 6h3.5M10 14h3.5', 'chevron': 'm7.5 5 5 5-5 5', 'refresh': 'M16.5 7A7 7 0 1 0 17 12M16.5 2.5V7H12', 'clock': 'M10 6v4l3 2M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0', 'info': 'M10 9v5M10 6h.01M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0', 'shield': 'm10 2 6.5 3v5c0 4-4 6.5-6.5 8-2.5-1.5-6.5-4-6.5-8V5zM7 9.5l2 2 4-4', 'folder': 'M2.5 5h6l2 2h7v10h-15zM2.5 5V3h6l2 2h7v2', 'file': 'M5 2.5h6l4 4v11H5zM11 2.5V7h4M8 10h4M8 13h4', 'copy': 'M7 6h10v11H7zM4 14H3V3h10v1', 'expand': 'M7 3H3v4M13 3h4v4M17 13v4h-4M7 17H3v-4', 'eye': 'M1.5 10s3-5 8.5-5 8.5 5 8.5 5-3 5-8.5 5-8.5-5-8.5-5M12 10a2 2 0 1 1-4 0 2 2 0 0 1 4 0', 'stop': 'M5 5h10v10H5z', 'terminal': 'm5 6 4 4-4 4M11 14h4', 'check': 'm5 10 3.5 3.5L15 6.5', 'alert': 'M9 3.5 2 16h16L11 3.5zM10 7v4M10 13.5h.01', 'search': 'M12.5 12.5 17 17M14 8.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0', 'rollback': 'M3 4v5h5M3 9a7 7 0 1 1 2 6', 'gpu': 'M4 4h12v12H4zM7 7h6v6H7zM1 7h3M1 13h3M16 7h3M16 13h3M7 1v3M13 1v3M7 16v3M13 16v3'}
+    function Icon({ name = 'server', className = '' }) {
+      return h('svg', { className: `orca-icon ${className}`, viewBox: '0 0 20 20', fill: 'none', stroke: 'currentColor', strokeWidth: 1.6, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true }, h('path', { d: iconPaths[name] ?? iconPaths.server }))
     }
+    function OrcaMark() {
+      return h('svg', { className: 'orca-mark', viewBox: '0 0 128 128', fill: 'none', 'aria-hidden': true },
+        h('rect', { width: 128, height: 128, rx: 28, fill: '#102d46' }),
+        h('path', { d: 'M6.5 60C12 65 23 63 25 72C26 77 39 69 49 60C56 54 60 53 62 50C67 46 62 35 59 31C56 27 65 28 71 33C78 38 78 45 84 45C98 43 114 45 121 52C132 63 105 68 97 74C105 62 95 60 87 63C70 66 60 73 48 78C34 84 24 78 19 75C12 73 7 70 6.5 60Z', fill: '#ffffff' }),
+        h('path', { d: 'M95.5 53.5C98 49.5 110 51.5 112 55.5C114 59 102 57.5 99 57C96 56.5 94 55.5 95.5 53.5Z', fill: '#102d46' }),
+        h('path', { d: 'M95 66.5C98 64.5 94 82 81 87C76 89 78 71 95 66.5ZM46 84C53 82 56 75 63 75.5C72 75 66 82 74 81C76 81 78 80.5 78 80.5C66 85 53 85.5 46 84Z', fill: '#ffffff' }),
+        h('path', { d: 'M8 68.5C13 75 22 73 24 82C25.5 87 24 91 23.5 92C22 86 14 85 10 77C9 74 8.5 71 8 68.5Z', fill: '#2fb0b8' }))
+    }
+    const ServerIcon = () => h(Icon, { name: 'server' })
+    const IconBox = ({ name = 'server' }) => h('span', { className: `orca-icon-box ${name === 'terminal' ? 'terminal' : ''}` }, h(Icon, { name }))
+    const Brand = ({ title, subtitle }) => h('div', { className: 'orca-brand' }, h(OrcaMark), h('div', null, h('h3', null, title), h('p', { className: 'orca-caption' }, subtitle)))
     const Button = ({ children, className = '', ...props }) => h('button', { type: 'button', className: `orca-btn ${className}`, ...props }, children)
-    const Badge = ({ text, tone = '', spin = false }) => h('span', { className: `orca-badge ${tone}` }, spin ? h('i', { className: 'orca-spinner', 'aria-hidden': true }) : null, text)
+    const Badge = ({ text, tone = '', spin = false, icon }) => h('span', { className: `orca-badge ${tone}` }, spin ? h('i', { className: 'orca-spinner', 'aria-hidden': true }) : icon ? h(Icon, { name: icon }) : null, text)
     const Notice = ({ children, tone = '', role = 'status' }) => h('div', { className: `orca-notice ${tone}`, role }, children)
-    const Empty = ({ children }) => h('div', { className: 'orca-empty' }, children)
+    const Empty = ({ children, icon }) => h('div', { className: 'orca-empty' }, icon ? h(Icon, { name: icon }) : null, children)
     function Copy({ text, label, t }) {
       const [state, setState] = useState('')
       return h('span', null, h(Button, { onClick: async () => {
         try { await navigator.clipboard.writeText(text); setState('copied') } catch { setState('copyFailed') }
-      } }, label ?? t('copy')), state ? h('span', { className: 'orca-caption', role: 'status' }, ` ${t(state)}`) : null)
+      } }, h(Icon, { name: state === 'copied' ? 'check' : 'copy' }), label ?? t('copy')), state ? h('span', { className: 'orca-caption', role: 'status' }, ` ${t(state)}`) : null)
     }
     async function api(path, body = {}, signal) {
       const response = await fetch(`api/dsh-orca/${path}`, { method: 'POST', credentials: 'same-origin', cache: 'no-store',
@@ -153,26 +181,29 @@ window.__ModuleLoader__.load({
       const rows = [[t('load'), host.load?.map(n => Number(n).toFixed(1)).join(' / ') ?? '—'],
         [t('memory'), `${bytes(host.memory?.available_bytes)} / ${bytes(host.memory?.total_bytes)}`],
         [t('disk'), `${bytes(host.disk?.free_bytes)} / ${bytes(host.disk?.total_bytes)}`]]
+      const mib = n => n == null ? '—' : (n / 1024).toFixed(n >= 102400 ? 0 : 1)
       return h(React.Fragment, null,
-        h('dl', { className: 'orca-kv' }, rows.flatMap(([k, v]) => [h('dt', { key: `${k}k` }, k), h('dd', { key: `${k}v` }, v)])),
+        h('dl', { className: 'orca-metrics' }, rows.map(([k, v]) => h('div', { key: k }, h('dt', null, k), h('dd', null, v)))),
         host.disk?.path ? h('div', { className: 'orca-caption orca-mono' }, host.disk.path) : null,
-        gpu ? h('div', null, h('div', { className: 'orca-muted' }, `${gpu.count} × ${gpu.model ?? 'GPU'} · ${t('vram')} ${bytes(gpu.memUsedMib * 1024 ** 2)} / ${bytes(gpu.memTotalMib == null ? null : gpu.memTotalMib * 1024 ** 2)}`),
+        gpu ? h('div', null, h('div', { className: 'orca-gpu-heading' }, `${gpu.count} × ${gpu.model ?? 'GPU'}`),
           h('div', { className: 'orca-gpus' }, (gpu.cards ?? []).map(card => h('div', { className: 'orca-gpu', key: card.index },
-            `#${card.index} · ${card.util == null ? '—' : `${card.util}%`}`,
+            h('div', { className: 'orca-gpu-label' }, h('span', null, `#${card.index}`), h('span', null, card.util == null ? '—' : `${card.util}%`)),
             h('div', { className: 'orca-meter', 'aria-hidden': true }, h('i', { style: { width: `${Math.min(100, Math.max(0, card.util ?? 0))}%` } })),
-            `${bytes(card.used == null ? null : card.used * 1024 ** 2)} / ${bytes(card.total == null ? null : card.total * 1024 ** 2)}`)))) : h('div', { className: 'orca-caption' }, host.gpuError || t('noGpu')))
+            h('div', { className: 'orca-gpu-memory' }, `${mib(card.used)} / ${mib(card.total)} GiB`)))),
+          !gpu.cards?.length ? h('div', { className: 'orca-caption' }, `${t('vram')} ${bytes(gpu.memUsedMib * 1024 ** 2)}`) : null) : h('div', { className: 'orca-caption' }, host.gpuError || t('noGpu')))
     }
     function HostRow({ host, t }) {
       const issue = host.error && host.attemptedAt ? 'unreachable' : !host.at ? 'unpolled' : host.stale ? 'stale' : 'reachable'
-      return h('details', { className: 'orca-row' }, h('summary', null,
-        h('span', { className: `orca-dot ${issue === 'unreachable' ? 'error' : ''}`, 'aria-hidden': true }),
-        h('span', { className: 'orca-host-info' }, h('span', { className: 'orca-identity' }, h(ServerIcon), host.host),
-          h('div', { className: 'orca-caption' }, t(issue), host.running ? ` · ${host.running} ${t('running')}` : '')),
-        diskLow(host.disk) ? h(Badge, { text: t('diskLow'), tone: 'warn' }) : host.gpu?.utilAvg != null ? h('span', { className: 'orca-muted' }, `GPU ${host.gpu.utilAvg}%`) : null),
-        h('div', { className: 'orca-caption', style: { marginTop: 8 } }, host.hostname),
-        host.at ? h('div', { className: 'orca-caption' }, `${t('cache')} · `, h(Ago, { at: host.at, t })) : null,
-        host.error && host.attemptedAt ? h(Notice, { tone: 'error' }, host.error) : null,
-        host.at ? h(Metrics, { host, t }) : null)
+      return h('details', { className: 'orca-row orca-host' }, h('summary', null,
+        h(IconBox, { name: 'server' }),
+        h('span', { className: 'orca-host-info' }, h('span', { className: 'orca-identity orca-mono' }, host.host),
+          h('div', { className: 'orca-caption orca-host-state' }, h('i', { className: `orca-dot ${issue === 'unreachable' ? 'error' : issue === 'reachable' ? 'good' : ''}`, 'aria-hidden': true }), t(issue), host.running ? ` · ${host.running} ${t('running')}` : '')),
+        diskLow(host.disk) ? h(Badge, { text: t('diskLow'), tone: 'warn', icon: 'alert' }) : host.gpu?.utilAvg != null ? h('span', { className: 'orca-muted' }, `GPU ${host.gpu.utilAvg}%`) : null,
+        h(Icon, { name: 'chevron', className: 'orca-chevron' })),
+        h('div', { className: 'orca-host-detail' },
+          h('div', { className: 'orca-caption' }, host.hostname, host.at ? ` · ${t('cache')} ` : '', host.at ? h(Ago, { at: host.at, t }) : null),
+          host.error && host.attemptedAt ? h(Notice, { tone: 'error' }, host.error) : null,
+          host.at ? h(Metrics, { host, t }) : null))
     }
     function JobRow({ job, store, t, focus }) {
       const [confirm, setConfirm] = useState(false), [busy, setBusy] = useState(false), [error, setError] = useState(null), [done, setDone] = useState(false)
@@ -191,13 +222,15 @@ window.__ModuleLoader__.load({
         catch (e) { setError(e.message) } finally { locked.current = false; setBusy(false) }
       }
       const state = job.stale && job.active ? 'unknown' : job.state
-      return h('article', { className: `orca-row ${focus ? 'orca-highlight' : ''}`, ref },
-        h('div', { className: 'orca-job-head' }, h('div', { className: 'orca-job-name orca-mono' }, job.session),
-          h(Badge, { text: t(words[state] ? state : 'unknown'), tone: state === 'failed' ? 'error' : '' })),
-        h('div', { className: 'orca-job-meta' }, h('span', { className: 'orca-mono' }, `@${job.host}`), h(Ago, { at: job.startedAt, t }), job.exitCode != null ? `${t('exit')} ${job.exitCode}` : null, job.stale ? t('stale') : null),
+      return h('article', { className: `orca-job ${job.active && !job.stale ? 'active' : ''} ${focus ? 'orca-highlight' : ''}`, ref },
+        h('div', { className: 'orca-job-head' },
+          h('div', { className: 'orca-job-title' }, h(IconBox, { name: 'terminal' }), h('div', { style: { minWidth: 0 } },
+            h('div', { className: 'orca-job-name orca-mono' }, job.session),
+            h('div', { className: 'orca-job-meta' }, h('span', { className: 'orca-mono' }, `@${job.host}`), '·', h(Ago, { at: job.startedAt, t }), job.exitCode != null ? `${t('exit')} ${job.exitCode}` : null, job.stale ? t('stale') : null))),
+          h(Badge, { text: t(words[state] ? state : 'unknown'), tone: state === 'failed' ? 'error' : state === 'running' || state === 'succeeded' ? 'good' : '', icon: state === 'succeeded' ? 'check' : undefined })),
         job.logTail ? h('div', { className: 'orca-log-preview', title: job.logTail }, job.logTail.trim()) : null,
-        h('div', { className: 'orca-job-actions' }, h(Button, { className: 'quiet', disabled: logBusy, onClick: showLog ? () => setShowLog(false) : loadLog }, logBusy ? t('loading') : showLog ? t('collapse') : t('logs')),
-          job.active && !done ? h(Button, { className: 'quiet', disabled: busy || job.stale || !job.jobId, title: job.stale ? t('staleStop') : undefined, onClick: () => setConfirm(true) }, t('stop')) : null),
+        h('div', { className: 'orca-job-actions' }, h(Button, { disabled: logBusy, onClick: showLog ? () => setShowLog(false) : loadLog }, h(Icon, { name: 'file' }), logBusy ? t('loading') : showLog ? t('collapse') : t('logs')),
+          job.active && !done ? h(Button, { disabled: busy || job.stale || !job.jobId, title: job.stale ? t('staleStop') : undefined, onClick: () => setConfirm(true) }, h(Icon, { name: 'stop' }), t('stop')) : null),
         confirm ? h('div', { className: 'orca-confirm', onKeyDown: e => { if (e.key === 'Escape' && !busy) setConfirm(false) } },
           h('p', null, tr(t, 'stopExplain', { host: job.host, session: job.session })),
           h('div', { className: 'orca-job-actions' }, h(Button, { disabled: busy, onClick: () => setConfirm(false) }, t('cancel')),
@@ -221,14 +254,14 @@ window.__ModuleLoader__.load({
         h('div', { className: 'orca-caption' }, `${t('expires')} · ${absolute(grant.expiresAt)}`),
         error ? h(Notice, { tone: 'error' }, error) : null, done ? h(Notice, null, t('revoked')) : null)
     }
-    function Section({ title, count, children }) {
-      return h('section', { className: 'orca-section' }, h('h4', null, title, count != null ? h('span', { className: 'orca-section-count' }, count) : null), children)
+    function Section({ title, count, children, icon }) {
+      return h('section', { className: 'orca-section' }, h('h4', null, icon ? h(Icon, { name: icon }) : null, title, count != null ? h('span', { className: 'orca-section-count' }, count) : null), children)
     }
     function History({ jobs, store, t, focus }) {
       const [open, setOpen] = useState(false)
       useEffect(() => { if (focus && jobs.some(j => j.host === focus.host && j.session === focus.session)) setOpen(true) }, [focus, jobs])
-      return h('details', { className: 'orca-row orca-section', open, onToggle: e => setOpen(e.currentTarget.open) },
-        h('summary', { className: 'orca-muted' }, t('recentJobs'), ` · ${jobs.length}`),
+      return h('details', { className: 'orca-row orca-history orca-section', open, onToggle: e => setOpen(e.currentTarget.open) },
+        h('summary', { className: 'orca-muted' }, h(Icon, { name: 'clock' }), t('recentJobs'), ` · ${jobs.length}`, h(Icon, { name: 'chevron', className: 'orca-chevron' })),
         open ? jobs.length ? jobs.map(job => h(JobRow, { key: `${job.host}:${job.jobId ?? job.session}`, job, store, t, focus: focus?.host === job.host && focus?.session === job.session })) : h(Empty, null, t('noRecent')) : null)
     }
     function FleetPanel({ store, t, useTabInfo }) {
@@ -245,19 +278,21 @@ window.__ModuleLoader__.load({
       const running = jobs.filter(j => j.active && !j.stale), recent = jobs.filter(j => !j.active || j.stale)
       const found = !focus || jobs.some(j => j.host === focus.host && j.session === focus.session && (!focus.jobId || j.jobId === focus.jobId))
       return h('div', { className: 'orca-root orca-panel', 'aria-label': t('fleet') },
-        h('div', { className: 'orca-toolbar' }, h('div', null, h('h3', null, t('fleet')),
-          h('p', { className: 'orca-caption' }, data ? `${hosts.filter(host => host.ok && !host.stale).length}/${hosts.length} · ${t('reachable')}` : t('loading')),
-          data?.lastRoundAt ? h('p', { className: 'orca-caption' }, `${t('lastProbe')} · `, h(Ago, { at: data.lastRoundAt, t })) : null),
-          h(Button, { disabled: busy, onClick: () => { void store.load(true); void store.grants() } }, t(busy ? 'refreshing' : 'refresh'))),
+        h('div', { className: 'orca-toolbar' }, h(Brand, { title: t('fleetTitle'), subtitle: t('fleetSubtitle') }),
+          h(Button, { className: 'primary', disabled: busy, onClick: () => { void store.load(true); void store.grants() } }, busy ? h('i', { className: 'orca-spinner', 'aria-hidden': true }) : h(Icon, { name: 'refresh' }), t(busy ? 'refreshing' : 'refresh'))),
+        data ? h(React.Fragment, null,
+          h('dl', { className: 'orca-overview' },
+            [[`${hosts.filter(host => host.ok && !host.stale).length}/${hosts.length}`, 'reachable'], [`${running.length}${data.jobsComplete ? '' : '+'}`, 'runningJobs'], [hosts.filter(host => !host.stale && diskLow(host.disk)).length, 'diskLow']].map(([value, label]) => h('div', { key: label, className: label === 'diskLow' && value > 0 ? 'warn' : '' }, h('dt', null, t(label)), h('dd', null, value)))),
+          h('div', { className: 'orca-sync' }, h('span', null, h(Icon, { name: 'clock' }), t('lastProbe'), ' · ', h(Ago, { at: data.lastRoundAt, t })),
+            h('span', { title: tr(t, 'coverage', { n: data.config.jobLimit }) }, h(Icon, { name: 'info' }), tr(t, 'coverageShort', { n: data.config.jobLimit }), data.jobsComplete ? '' : ` · ${t('incomplete')}`))) : null,
         error ? h(Notice, { tone: 'error', role: 'alert' }, t(data ? 'refreshError' : 'transportHint'), h('div', { className: 'orca-caption' }, error), h(Button, { disabled: busy, onClick: () => store.load() }, t('retry'))) : null,
         !data ? (!error ? h(Empty, null, t('loading')) : null) : h(React.Fragment, null,
-          h('div', { className: 'orca-caption' }, tr(t, 'coverage', { n: data.config.jobLimit })),
           !found ? h(Notice, null, t('jobMissing'), h(Button, { className: 'quiet', onClick: () => store.focus(null) }, t('dismiss'))) : null,
-          h(Section, { title: t('runningJobs'), count: `${running.length}${data.jobsComplete ? '' : '+'}` }, running.length ? running.map(job => h(JobRow, { key: `${job.host}:${job.jobId ?? job.session}`, job, store, t, focus: focus?.host === job.host && focus?.session === job.session })) : h(Empty, null, t('noJobs'))),
-          h(Section, { title: t('hosts'), count: hosts.length }, hosts.length ? hosts.map(host => h(HostRow, { host, t, key: host.host })) : h(Empty, null, t('noHosts'))),
+          h(Section, { title: t('activeJobs'), count: `${running.length}${data.jobsComplete ? '' : '+'}` }, running.length ? running.map(job => h(JobRow, { key: `${job.host}:${job.jobId ?? job.session}`, job, store, t, focus: focus?.host === job.host && focus?.session === job.session })) : h(Empty, { icon: 'terminal' }, t('noJobs'))),
+          h(Section, { title: t('hosts'), count: hosts.length }, hosts.length ? h('div', { className: 'orca-hosts' }, hosts.map(host => h(HostRow, { host, t, key: host.host }))) : h(Empty, null, t('noHosts'))),
           h(History, { jobs: recent, store, t, focus })),
-        h(Section, { title: t('grants'), count: grants?.length }, grantsError ? h(Notice, { tone: 'error' }, grantsError, h(Button, { onClick: store.grants }, t('retry'))) : null,
-          grants ? grants.length ? grants.map(grant => h(GrantRow, { key: JSON.stringify([grant.host, grant.workdir, grant.action]), grant, store, t })) : h(Empty, null, t('noGrants')) : !grantsError ? h(Empty, null, t('loading')) : null))
+        h(Section, { title: t('grants'), icon: 'shield', count: grants?.length }, grantsError ? h(Notice, { tone: 'error' }, grantsError, h(Button, { onClick: store.grants }, t('retry'))) : null,
+          grants ? grants.length ? grants.map(grant => h(GrantRow, { key: JSON.stringify([grant.host, grant.workdir, grant.action]), grant, store, t })) : h(Empty, { icon: 'shield' }, t('noGrants')) : !grantsError ? h(Empty, null, t('loading')) : null))
     }
     function Header({ store, t, openFleet }) {
       const { data, error } = useFleet(store)
@@ -265,22 +300,77 @@ window.__ModuleLoader__.load({
       const count = jobs.filter(j => j.active && !j.stale).length
       const alert = error || hosts.some(host => host.error && host.attemptedAt || diskLow(host.disk)) || jobs.some(job => job.state === 'failed' && Date.now() - new Date(job.finishedAt).getTime() < 86400000)
       return h('span', { className: 'orca-root' }, h(Button, { className: 'quiet orca-header', title: `${t('allRegistered')}${data?.jobsComplete ? '' : ` · ${t('incomplete')}`}`, onClick: () => openFleet() },
-        h('span', { className: 'orca-identity' }, h(ServerIcon)), t('fleet'), data ? `${count}${data.jobsComplete ? '' : '+'}` : '—', alert ? h('span', { className: 'orca-dot error', 'aria-label': t('attention'), title: t('attention') }) : null))
+        h(OrcaMark), t('fleet'), data ? `${count}${data.jobsComplete ? '' : '+'}` : '—', alert ? h('span', { className: 'orca-dot error', 'aria-label': t('attention'), title: t('attention') }) : null))
     }
-    function Settings({ store, t, openFleet }) {
+    const policyLists = ['allowedCommands', 'deniedCommands', 'trustedWorkdirs']
+    const policyDraft = policy => ({ ...policy, ...Object.fromEntries(policyLists.map(key => [key, policy[key].join('\n')])) })
+    const policyValue = draft => ({ ...draft, grantTtlDays: Number(draft.grantTtlDays), ...Object.fromEntries(policyLists.map(key => [key, draft[key].split('\n').map(line => line.trim()).filter(Boolean)])) })
+    function PolicyEditor({ store, t }) {
+      const [savedPolicy, setSavedPolicy] = useState(null), [draft, setDraft] = useState(null)
+      const [busy, setBusy] = useState(false), [error, setError] = useState(''), [message, setMessage] = useState(''), [reset, setReset] = useState(false)
+      const accept = value => { setSavedPolicy(value); setDraft(policyDraft(value.policy)); setReset(false) }
+      useEffect(() => {
+        const controller = new AbortController()
+        api('settings/get', {}, controller.signal).then(accept).catch(err => { if (!controller.signal.aborted) setError(err.message) })
+        return () => controller.abort()
+      }, [])
+      const reload = async () => {
+        setBusy(true); setError(''); setMessage('')
+        try { accept(await api('settings/get', {}, store.signal)) } catch (err) { setError(err.message) } finally { setBusy(false) }
+      }
+      const edit = (key, value) => { setDraft(old => ({ ...old, [key]: value })); setReset(false); setMessage('') }
+      const dirty = !!draft && (reset || JSON.stringify(policyValue(draft)) !== JSON.stringify(savedPolicy.policy))
+      const save = async event => {
+        event.preventDefault()
+        if (!dirty || busy) return
+        const policy = policyValue(draft)
+        if (!Number.isInteger(policy.grantTtlDays) || policy.grantTtlDays < 1 || policy.grantTtlDays > 90) { setError(t('policyInvalid')); return }
+        setBusy(true); setError(''); setMessage('')
+        try {
+          accept(await api('settings/save', reset ? { revision: savedPolicy.revision, reset: true } : { revision: savedPolicy.revision, policy }, store.signal))
+          setMessage('policySaved'); void store.load()
+        } catch (err) { setError(err.message) } finally { setBusy(false) }
+      }
+      const tier = action => action === 'stop' || draft.alwaysAsk.includes(action) ? 'alwaysAsk' : draft.askOnce.includes(action) ? 'askOnce' : draft.autoAllow.includes(action) || ['status', 'read', 'grep', 'ls', 'grants'].includes(action) ? 'autoAllow' : 'alwaysAsk'
+      const setTier = (action, target) => {
+        setDraft(old => ({ ...old, ...Object.fromEntries(['autoAllow', 'askOnce', 'alwaysAsk'].map(key => [key, [...old[key].filter(item => item !== action), ...(key === target ? [action] : [])]])) }))
+        setReset(false); setMessage('')
+      }
+      return h('form', { onSubmit: save, 'aria-label': t('authorization'), 'aria-busy': busy },
+        error ? h(Notice, { tone: 'error', role: 'alert' }, error, h('div', { className: 'orca-policy-actions' }, h(Button, { onClick: reload, disabled: busy }, t('reloadPolicy')))) : null,
+        !draft ? (!error ? h(Empty, null, t('loading')) : null) : h(React.Fragment, null,
+          h('div', { className: 'orca-policy-status' }, h(Badge, { icon: 'shield', tone: savedPolicy.policy.mode === 'open' ? 'warn' : 'good', text: tr(t, 'activeMode', { mode: t(savedPolicy.policy.mode) }) }), dirty ? h('span', { className: 'orca-caption', role: 'status' }, t('pendingPolicy')) : null),
+          h('div', { className: 'orca-policy-modes', role: 'radiogroup', 'aria-label': t('authorization') }, ['controlled', 'open'].map(mode => h('label', { className: `orca-mode ${draft.mode === mode ? 'selected' : ''}`, key: mode },
+            h('input', { type: 'radio', name: 'orca-policy-mode', value: mode, checked: draft.mode === mode, disabled: busy, onChange: () => edit('mode', mode) }), h('span', null, h('strong', null, t(mode)), h('small', null, t(`${mode}Help`)))))),
+          draft.mode === 'open' ? h(Notice, { tone: 'warn' }, t('openScope')) : null,
+          h('p', { className: 'orca-caption' }, tr(t, 'policySource', { source: t(savedPolicy.source === 'ui' ? 'uiSource' : 'fileSource') })),
+          message ? h(Notice, null, t(message)) : null,
+          h('div', { className: 'orca-policy-actions' }, h(Button, { type: 'submit', className: 'primary', disabled: busy || !dirty }, h(Icon, { name: 'check' }), t(busy ? 'savingPolicy' : 'savePolicy')),
+            h(Button, { disabled: busy || !dirty, onClick: () => { accept(savedPolicy); setMessage(''); setError('') } }, t('cancel')),
+            h(Button, { className: 'quiet', disabled: busy, onClick: () => { setDraft(policyDraft(savedPolicy.basePolicy)); setReset(true); setMessage('resetDraft'); setError('') } }, t('resetPolicy'))),
+          h('details', { className: 'orca-policy-rules' }, h('summary', null, t('policyRules')),
+            draft.mode === 'open' ? h('p', { className: 'orca-muted' }, t('rulesInactive')) : null,
+            h('fieldset', { className: 'orca-policy-fields', disabled: busy || draft.mode === 'open' },
+              ['allowedCommands', 'deniedCommands', 'trustedWorkdirs'].map((key, i) => h('label', { className: 'orca-field', key }, t(['whitelist', 'denylist', 'directories'][i]),
+                h('textarea', { className: 'orca-input', rows: key === 'deniedCommands' ? 6 : 3, value: draft[key], spellCheck: false, onChange: e => edit(key, e.target.value) }),
+                h('small', null, t(key === 'trustedWorkdirs' ? 'directoryHelp' : 'commandHelp')))),
+              h('h4', null, t('actionTiers')),
+              ['status', 'read', 'grep', 'ls', 'grants', 'run', 'launch', 'patch', 'rollback', 'stop'].map(action => h('label', { className: 'orca-tier-row', key: action }, h('span', null, t(action === 'grants' ? 'grantTool' : action)),
+                h('select', { className: 'orca-input', value: tier(action), disabled: action === 'stop', onChange: e => setTier(action, e.target.value) }, ['autoAllow', 'askOnce', 'alwaysAsk'].map(key => h('option', { key, value: key }, t(key)))))),
+              h('p', { className: 'orca-caption' }, t('stopPolicyHelp')),
+              h('label', { className: 'orca-field' }, t('ttl'), h('input', { className: 'orca-input', type: 'number', min: 1, max: 90, required: true, value: draft.grantTtlDays, onChange: e => edit('grantTtlDays', e.target.value) }), h('small', null, t('ttlHelp'))),
+            h('div', { className: 'orca-policy-actions' }, h(Button, { type: 'submit', className: 'primary', disabled: busy || !dirty }, t(busy ? 'savingPolicy' : 'savePolicy')))))))
+    }
+    function Settings({ store, t }) {
       const { data, error } = useFleet(store)
       const config = data?.config
-      return h('div', { className: 'orca-root orca-settings' }, h('div', { className: 'orca-toolbar' }, h('h3', null, t('config'))),
-        h(Notice, null, t('sessionRequired')),
+      return h('div', { className: 'orca-root orca-settings' }, h('div', { className: 'orca-toolbar' }, h(Brand, { title: t('config'), subtitle: t('configSubtitle') })),
+        h(Section, { title: t('authorization'), icon: 'shield' }, h(PolicyEditor, { store, t })),
         error ? h(Notice, { tone: 'error' }, t('transportHint'), h('div', null, error)) : null,
-        !config ? (!error ? h(Empty, null, t('loading')) : null) : h(React.Fragment, null,
-          h('dl', { className: 'orca-kv' }, h('dt', null, t('poll')), h('dd', null, config.pollSeconds ? `${config.pollSeconds} ${t('seconds')}` : t('manual')),
-          h('dt', null, t('hosts')), h('dd', null, `${config.panelHosts.length}${config.discovered ? ` · ${t('discovery')}` : ''}`)),
-          h(Section, { title: t('whitelist') }, h('div', { className: 'orca-chip-list' }, config.allowedCommands.length ? config.allowedCommands.map(s => h('span', { key: s, className: 'orca-chip' }, s)) : t('none'))),
-          h(Section, { title: t('directories') }, h('div', { className: 'orca-chip-list' }, config.trustedWorkdirs.length ? config.trustedWorkdirs.map(s => h('span', { key: s, className: 'orca-chip' }, s)) : t('none'))),
-          h(Section, { title: t('grants') }, h('p', { className: 'orca-muted' }, tr(t, 'approvalHint', { n: config.grantTtlDays })),
-            h('div', { className: 'orca-chip-list' }, (config.askOnce ?? []).filter(s => !(config.alwaysAsk ?? []).includes(s)).map(s => h('span', { className: 'orca-chip', key: s }, s))))),
-        h('p', { className: 'orca-muted' }, t('configHint')))
+        config ? h('div', { className: 'orca-settings-summary' },
+          h('div', null, h(Icon, { name: 'clock' }), h('div', null, h('span', { className: 'orca-caption' }, t('poll')), h('strong', null, config.pollSeconds ? `${config.pollSeconds} ${t('seconds')}` : t('manual')))),
+          h('div', null, h(ServerIcon), h('div', null, h('span', { className: 'orca-caption' }, t('hosts')), h('strong', null, `${config.panelHosts.length}${config.discovered ? ` · ${t('discovery')}` : ''}`)))) : null,
+        h('p', { className: 'orca-muted orca-settings-footer' }, h(Icon, { name: 'file' }), t('policyFooter')))
     }
     function readArg(block, key) {
       try { return typeof block.args?.text === 'function' ? block.args.text(key) : block.args?.[key] } catch { return undefined }
@@ -374,14 +464,15 @@ window.__ModuleLoader__.load({
       return h('article', { className: 'orca-root orca-tool' },
         h('div', { className: 'orca-tool-head' },
           h('button', { type: 'button', className: 'orca-toggle', 'aria-expanded': !!open, onClick: () => setChosen(!open) },
-            h('span', { className: 'orca-caption', 'aria-hidden': true }, open ? '⌄' : '›'),
-            h('span', { className: 'orca-tool-title' }, h('span', { className: 'orca-identity' }, h(ServerIcon), host ?? 'Orca', h('span', { className: 'orca-caption' }, ` · ${t(toolKey(toolName))}`)),
-              h('strong', { className: 'orca-mono', title }, title), path && path !== title ? h('div', { className: 'orca-tool-path orca-mono', title: path }, path) : null)),
-          h(Badge, { text: status, tone: errorStates.has(state) ? 'error' : warningStates.has(state) ? 'warn' : '', spin: !done })),
+            h(IconBox, { name: ({ run: 'terminal', launch: 'terminal', status: 'server', read: 'file', patch: 'file', ls: 'folder', grep: 'search', rollback: 'rollback', stop: 'stop', grantTool: 'shield' })[toolKey(toolName)] }),
+            h('span', { className: 'orca-tool-title' }, h('span', { className: 'orca-identity' }, host ?? 'Orca', ` · ${t(toolKey(toolName))}`),
+              h('strong', { className: 'orca-mono', title }, title), path && path !== title ? h('div', { className: 'orca-tool-path orca-mono', title: path }, path) : null),
+            h(Badge, { text: status, tone: errorStates.has(state) ? 'error' : warningStates.has(state) ? 'warn' : state === 'succeeded' ? 'good' : '', spin: !done, icon: state === 'succeeded' ? 'check' : exceptional ? 'alert' : undefined }),
+            h(Icon, { name: 'chevron', className: 'orca-chevron' }))),
         open ? h('div', { className: 'orca-tool-body' },
           h('div', { className: 'orca-toolbar' }, h('div', { className: 'orca-tool-actions' }, done ? h(Copy, { text, t }) : null,
-            done ? h(Button, { className: 'quiet', onClick: () => setFull(!full) }, t(full ? 'boundedOutput' : 'fullOutput')) : null,
-            inspect ? h(Button, { className: 'quiet', onClick: inspect }, t('inspect')) : null)),
+            done ? h(Button, { className: 'quiet', onClick: () => setFull(!full) }, h(Icon, { name: 'expand' }), t(full ? 'boundedOutput' : 'fullOutput')) : null,
+            inspect ? h(Button, { className: 'quiet', onClick: inspect }, h(Icon, { name: 'eye' }), t('inspect')) : null)),
           m?.truncated ? h(Notice, { tone: 'warn' }, t('truncated')) : null,
           !done ? h(React.Fragment, null, h('pre', { className: 'orca-pre wrap' }, readArg(block, 'command') ?? readArg(block, 'patch') ?? path ?? t('preparing')), h('p', { className: 'orca-caption' }, t('progressHint'))) :
             block.isError ? h(Notice, { tone: state === 'denied' || state === 'stopped' ? '' : 'error' }, text || block.error?.code || t('failed')) : h(ToolBody, { name: toolName, m, text, t, full }),
@@ -417,7 +508,7 @@ window.__ModuleLoader__.load({
         for (const tool of ['status', 'read', 'run', 'launch', 'stop', 'grep', 'ls', 'patch', 'rollback', 'grants']) register('tool.call.toolview', { key: `orca_${tool}` }, ToolCard)
         ctx.inject(['sidebarRightTabs', 'sidebarRight'], scope => {
           scope.effect(() => scope.get('sidebarRightTabs').register({ id: 'dsh-orca', kind: 'dsh-orca', title: () => t('fleet'), keepMounted: true,
-            guide: [{ id: 'orca-fleet', order: 35, title: () => t('fleet'), description: () => t('guide'), icon: ServerIcon }] }))
+            guide: [{ id: 'orca-fleet', order: 35, title: () => t('fleet'), description: () => t('guide'), icon: OrcaMark }] }))
           scope.slots.inject('sidebar.right.pane.tab', () => scope.slots.register({ name: 'sidebar.right.pane.tab', key: 'dsh-orca', locale: 'orca' }, props => h(FleetPanel, { ...props, store })))
         })
       },
