@@ -1,0 +1,26 @@
+# Override in your profile's cordis.patch.yml with a `- id: orca` row; an
+# override replaces this whole `config`, so copy every key you want to keep.
+- insert:
+    - id: orca
+      name: dsh-orca
+      config:
+        # Empty: allow every concrete Host alias in ~/.ssh/config.
+        hosts: []
+        python: python3
+        policy:
+          allowedCommands:
+            - nvidia-smi
+            - nvidia-smi *
+            - git status
+            - git log *
+            - git diff *
+            - ls *
+            - tail *
+            - df -h *
+          deniedCommands:
+            - rm -rf /*
+            - sudo *
+            - shutdown*
+            - reboot*
+            - mkfs*
+            - kill -9 -1*

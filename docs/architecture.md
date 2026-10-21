@@ -11,12 +11,17 @@
 ## 组件
 
 ```
-DSH (Web/Host)
-  └── index.js  ── defineTool × N
-        └── engine/  (Python 标准库)
-              └── OpenSSH (ControlMaster 复用)
-                    └── 远端 python / tmux / nvidia-smi / apply_patch
+DSH (Host)
+  └── index.js  ── 10 个 orca_* 工具 + tools/pre-execute 审批 + guard
+        └── lib/engine.js  ── 每次调用一个 `python3 engine/remote_fleet_mcp.py cli-json` 进程（进程组级取消）
+              └── engine/  (Python 标准库)
+                    ├── remote_fleet_mcp.py   上游冻结副本 + 小钩子
+                    └── orca_ext.py           orca 专有工具；远端程序见 orca_fs / orca_patch_apply / orca_logger
+                          └── OpenSSH (ControlMaster 复用)
+                                └── 远端 python3 -c <程序> / tmux / nvidia-smi
 ```
+
+远端不再需要 Codex：`orca_patch` 用自带的 Python 实现（与 Codex `apply_patch` 语义逐字节对照测试过，见 [engine-changes.md](engine-changes.md)）。
 
 DSH 只依赖本地 Node；远端只有 Python 标准库、OpenSSH、tmux。
 
@@ -47,17 +52,18 @@ DSH 只依赖本地 Node；远端只有 Python 标准库、OpenSSH、tmux。
 ```
 ~/.local/state/remote-fleet/          ← 与上游共用，不可改名
   jobs/                               任务登记
-  locks/                              workdir 级 flock
+  locks/                              workdir 级 flock（orca_patch 也取同一把锁）
+~/.local/state/orca/backups/<patch_id>/   ← 本插件新增：patch 备份与 manifest（回滚后改名为 .rolled-back-*）
 <log_path>.remote-fleet-status.json   ← 与上游共用，只加字段
-<log_path> 同级的 events.ndjson / tail.ring / meta.json   ← 本插件新增，上游忽略
+<log_path>.orca/                      ← 本插件新增（meta/events/tail.ring），上游忽略
 ```
 
 ## 数据流
 
 **status**：`orca_status` → `engine cli status` → SSH → 远端读数 → 压缩投影 → 模型。
 **run**：`orca_run` 参数校验 → policy 判定 → `engine cli run` → 进程组超时 → 有界输出。
-**patch**：`orca_patch` 先 read 取 sha256 → guard 校验 → 后端选择（git / 影子目录 / codex）→ 回滚点。
-**launch**：`orca_launch` 登记 job → tmux + `remote_fleet_job_id` → 写 status 旁挂 → 返回 job id → 投影到 DSH Jobs。
+**patch**：插件按上次读到的哈希自动补 `expected_sha256` → 本地 guard → 远端取 workdir 锁 → 在内存里算出全部结果（`dry_run` 到此为止）→ 备份 + manifest（`prepared`）→ 逐个写入（写前复核字节）→ `committed`；失败即恢复，被杀则留下可幂等回滚的日志 → 返回 `patch_id`。回复丢失时插件查询 `status` 再回答。详见 [engine-changes.md](engine-changes.md)。
+**launch**：`orca_launch` 登记 job → tmux + `@remote_fleet_job_id` → 写 status 旁挂 → 返回 job id → 投影到 DSH Jobs。
 
 ## 关键决策
 

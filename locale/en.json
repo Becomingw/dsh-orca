@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Orca Remote Fleet",
+    "description": "Check status, read files and run commands on your trusted SSH hosts. Decisions stay local; jobs started by remote-fleet in Codex or Claude stay visible."
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Orca 远端机群",
+    "description": "在受信任的 SSH 主机上查看状态、读取文件、执行命令。决策留在本地；Codex / Claude 里 remote-fleet 启动的任务同样可见。"
+  }
+}

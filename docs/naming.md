@@ -13,8 +13,9 @@
 |---|---|---|
 | 仓库 / npm 包 | `dsh-orca` | |
 | 插件行 id | `orca` | `cordis.patch.yml` 里的 `- id: orca` |
-| 工具前缀 | `orca_` | 9 个工具全部统一 |
-| 本地自有产物 | `<log>.orca/` | 一个目录管住 meta/events/tail |
+| 工具前缀 | `orca_` | 10 个工具全部统一 |
+| 远端自有产物 | `<log>.orca/`、`~/.local/state/orca/{backups,bin}` | 日志扩展；patch 备份；远端程序缓存 |
+| 本地自有产物 | `$DSH_HOME/storages/orca/grants.json` | 记住的审批 |
 | 远端协议目录 | `~/.local/state/remote-fleet/` | **冻结**，与上游共用 |
 
 ## 工具对照
@@ -24,12 +25,13 @@
 | `orca_status` | `remote_status` | |
 | `orca_read` | `remote_read_file` | |
 | `orca_run` | `remote_run` | |
-| `orca_patch` | `remote_apply_patch` | 后端改写为 git → 影子目录 → codex |
+| `orca_patch` | `remote_apply_patch` | 改为自带 Python 实现：dry-run、全有或全无、备份；不再依赖远端 Codex |
 | `orca_launch` | `remote_launch_tmux` | |
 | `orca_stop` | `remote_stop_job` | |
 | `orca_grep` | — | 新增，服务端过滤 |
 | `orca_ls` | — | 新增 |
 | `orca_rollback` | — | 新增，配合 patch 的备份点 |
+| `orca_grants` | — | 新增，列出/撤销记住的审批（本地） |
 
 ## 冻结区（不可改名）
 
@@ -37,18 +39,21 @@
 |---|---|---|
 | 状态目录 | `~/.local/state/remote-fleet/` | 上游 jobs/locks 在这里 |
 | 状态旁挂文件 | `<log>.remote-fleet-status.json` | 上游 `status` 读它 |
-| 字段 | `exit_code` / `finished_at` / `job_id` / `session` | 只增不改 |
-| tmux 标记 | `remote_fleet_job_id` | 识别 fleet 任务的唯一依据 |
+| 字段 | `exit_code` / `finished_at` / `job_id` / `session` / `stopped_by_remote_fleet` | 只增不改 |
+| tmux 标记 | 用户选项 `@remote_fleet_job_id` | 识别 fleet 任务的唯一依据（不是环境变量） |
 | session 规则 | `[A-Za-z0-9][A-Za-z0-9_.-]{0,79}` + `-t =name` | 前缀匹配会误杀 |
 
 ## 配置键
+
+profile 覆盖行（仓库自带 patch 用 `- insert:`，见 [policy.md](policy.md)）：
 
 ```yaml
 - id: orca
   name: dsh-orca
   config:
     hosts: ["13", "16", "17", "21"]
-    enginePath: /Users/mengfei/plugins/dsh-orca/engine
+    python: python3          # Finder 启动的 DSH PATH 很短，必要时写绝对路径
+    sshPersistSeconds: 600   # ControlPersist；0 关闭复用
     sessionPrefix: ""        # 默认空，保证与上游起的任务同名可见
     policy: { ... }          # 见 policy.md
     logging: { ... }         # 见 logging.md

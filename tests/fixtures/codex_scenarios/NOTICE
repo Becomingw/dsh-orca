@@ -1,0 +1,5 @@
+These scenario fixtures are copied unmodified from OpenAI Codex
+(https://github.com/openai/codex), codex-rs/apply-patch/tests/fixtures/scenarios,
+commit 430a167 (2026-10-21), licensed under the Apache License 2.0.
+They are used as the reference specification for engine/orca_patch_apply.py;
+see tests/test_codex_scenarios.py for the scenarios where orca deliberately differs.
