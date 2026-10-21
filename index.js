@@ -4,6 +4,7 @@
  */
 import { callEngine, engineEnv, ENGINE_PATH } from './lib/engine.js'
 import { FleetCache } from './lib/cache.js'
+import { discoverSshAliases, panelHosts } from './lib/discovery.js'
 import { DAY_MS, defaultGrantsPath, GrantStore } from './lib/grants.js'
 import { Observations } from './lib/observations.js'
 import { ACTIONS, decide, DEFAULT_POLICY, deniedReason } from './lib/policy.js'
@@ -172,10 +173,14 @@ function mountPanel(ctx, config, call) {
       return undefined
     }
   })()
-  if (webServer === undefined || config.hosts.length === 0) return
+  if (webServer === undefined) return
+
+  // An empty `hosts` config means "every concrete ssh alias"; the panel must
+  // still show something, so fall back to discovery instead of mounting nothing.
+  const selected = panelHosts(config.hosts, discoverSshAliases())
 
   const cache = new FleetCache({
-    hosts: config.hosts,
+    hosts: selected.hosts,
     pollSeconds: config.panel.pollSeconds,
     jobLimit: config.panel.jobLimit,
     call: (tool, args) => call(tool, args),
@@ -202,6 +207,8 @@ function mountPanel(ctx, config, call) {
               ...cache.snapshot(),
               config: {
                 hosts: config.hosts,
+                panelHosts: selected.hosts,
+                discovered: selected.discovered,
                 pollSeconds: config.panel.pollSeconds,
                 jobLimit: config.panel.jobLimit,
                 allowedCommands: config.policy.allowedCommands,

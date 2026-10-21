@@ -173,7 +173,7 @@ window.__ModuleLoader__.load({
           ]),
           h('div', { className: 'orca-row', key: 'h' }, [
             h('span', { key: 'l' }, '监控主机'),
-            h('span', { key: 'v' }, `${(config.hosts ?? []).length} 台`),
+            h('span', { key: 'v' }, `${(config.panelHosts ?? config.hosts ?? []).length} 台${config.discovered ? '（自动发现）' : ''}`),
           ]),
         ]),
         h('div', { className: 'orca-section-title', key: 'w', style: { marginTop: 10 } }, '免询问白名单'),
@@ -239,7 +239,8 @@ window.__ModuleLoader__.load({
         error ? h('div', { className: 'orca-err', key: 'e' }, `面板接口不可用：${error}`) : null,
         hosts.length > 0
           ? h('div', { className: 'orca-grid', key: 'grid' }, hosts.map((host) => h(HostCard, { host, key: host.host })))
-          : h('div', { className: 'orca-empty', key: 'none' }, '还没有配置主机：在 cordis.patch.yml 的 - id: orca 下设置 hosts。'),
+          : h('div', { className: 'orca-empty', key: 'none' },
+              '没有可监控的主机：~/.ssh/config 里没有具体别名，或在 cordis.patch.yml 的 - id: orca 下设置 hosts。'),
         h('div', { key: 'jobs' }, [
           h('div', { className: 'orca-section-title', key: 't' }, '最近任务'),
           h(JobRows, { jobs, key: 'rows' }),
