@@ -10,7 +10,7 @@
 ## 一次性配置
 
 ```bash
-cd ~/plugins/dsh-remote-fleet
+cd ~/plugins/dsh-orca
 git remote add upstream https://git.scosine.org/becomingw/remote-fleet.git
 git fetch upstream
 ```

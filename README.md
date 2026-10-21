@@ -1,6 +1,8 @@
-# dsh-remote-fleet
+# dsh-orca — 远端机群
 
 DeepSeek Harness 原生插件：把 [remote-fleet](../remote-fleet) 的远端执行能力做成 DSH 自己的工具与面板。
+
+> **一群虎鲸，一个大脑。** 本机决策，机群执行。
 
 > **状态：M0（只有设计文档，尚未实现）。** 路线见 [docs/roadmap.md](docs/roadmap.md)。
 

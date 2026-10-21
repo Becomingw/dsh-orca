@@ -37,7 +37,7 @@ DSH 只依赖本地 Node；远端只有 Python 标准库、OpenSSH、tmux。
 本地：
 
 ```
-~/plugins/dsh-remote-fleet/
+~/plugins/dsh-orca/
   engine/           冻结引擎（含 UPSTREAM_COMMIT）
   node_modules/     DSH 依赖
 ```

@@ -23,10 +23,10 @@
 
 ```yaml
 - id: remote-fleet
-  name: dsh-remote-fleet
+  name: dsh-orca
   config:
     hosts: ["13", "16", "17", "21"]      # 缺省读 ~/.ssh/config 的交集
-    enginePath: /Users/mengfei/plugins/dsh-remote-fleet/engine
+    enginePath: /Users/mengfei/plugins/dsh-orca/engine
     policy:
       autoAllow:   [status, read, grep, ls]
       askOnce:     [run, launch]
