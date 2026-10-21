@@ -4,7 +4,7 @@ DeepSeek Harness 原生插件：把 [remote-fleet](../remote-fleet) 的远端执
 
 > **一群虎鲸，一个大脑。** 本机决策，机群执行。
 
-> **状态：M5。** 10 个工具可用；审批分级与授权记忆、结构化日志、原子 patch 与回滚均已实现，并在真实主机（13）上跑通。剩 M6（面板）。路线见 [docs/roadmap.md](docs/roadmap.md)。
+> **状态：M6。** 10 个工具可用；审批分级与授权记忆、结构化日志、原子 patch 与回滚均在真实主机（13）上跑通；面板（设置 → Orca 机群）读宿主缓存，打开零 SSH。路线见 [docs/roadmap.md](docs/roadmap.md)。
 
 ## 定位
 
@@ -114,5 +114,6 @@ UPSTREAM.md           冻结点与同步记录
 | [docs/engine-changes.md](docs/engine-changes.md) | 冻结引擎相对上游的改动与已知问题 |
 | [docs/policy.md](docs/policy.md) | 免确认策略与审批矩阵 |
 | [docs/logging.md](docs/logging.md) | 结构化日志与 tail 设计 |
+| [docs/panel.md](docs/panel.md) | 面板：缓存模型、接口、成本、已知限制 |
 | [docs/roadmap.md](docs/roadmap.md) | 里程碑与验收标准 |
 | [docs/upstream.md](docs/upstream.md) | 上游同步流程 |
