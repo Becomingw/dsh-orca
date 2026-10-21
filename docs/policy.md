@@ -8,27 +8,27 @@
 
 | 工具 | 风险 | 默认策略 | 记忆粒度 |
 |---|---|---|---|
-| `remote_status` | 只读 | auto | — |
-| `remote_read` | 只读 | auto | — |
-| `remote_grep` / `remote_ls` | 只读 | auto | — |
-| `remote_run` | 有副作用 | askOnce | host + workdir |
-| `remote_launch` | 有副作用（长任务） | askOnce | host + workdir |
-| `remote_patch` | 改远端代码 | alwaysAsk | — |
-| `remote_rollback` | 覆盖文件 | alwaysAsk | — |
-| `remote_stop` | 杀进程 | alwaysAsk | — |
+| `orca_status` | 只读 | auto | — |
+| `orca_read` | 只读 | auto | — |
+| `orca_grep` / `orca_ls` | 只读 | auto | — |
+| `orca_run` | 有副作用 | askOnce | host + workdir |
+| `orca_launch` | 有副作用（长任务） | askOnce | host + workdir |
+| `orca_patch` | 改远端代码 | alwaysAsk | — |
+| `orca_rollback` | 覆盖文件 | alwaysAsk | — |
+| `orca_stop` | 杀进程 | alwaysAsk | — |
 
-`remote_run` 命中 `allowedCommands` 时跳过询问。
+`orca_run` 命中 `allowedCommands` 时跳过询问。
 
 ## 配置
 
 ```yaml
-- id: remote-fleet
+- id: orca
   name: dsh-orca
   config:
     hosts: ["13", "16", "17", "21"]      # 缺省读 ~/.ssh/config 的交集
     enginePath: /Users/mengfei/plugins/dsh-orca/engine
     policy:
-      autoAllow:   [status, read, grep, ls]
+      autoAllow:   [status, read, grep, ls]   # 对应 orca_* 工具
       askOnce:     [run, launch]
       alwaysAsk:   [patch, rollback, stop]
       allowedCommands:
@@ -68,5 +68,5 @@ tool call
 ## 共用机器的额外规则
 
 - 跨出 `trustedWorkdirs` 的写操作一律 alwaysAsk。
-- `remote_stop` 永不记忆：只停本次显式确认过的 job。
-- `remote_run` 默认用收敛环境（`env -i` + 显式 PATH），避免继承别人的变量造成误判。
+- `orca_stop` 永不记忆：只停本次显式确认过的 job。
+- `orca_run` 默认用收敛环境（`env -i` + 显式 PATH），避免继承别人的变量造成误判。

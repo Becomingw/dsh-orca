@@ -32,11 +32,13 @@
 remote_fleet_job_id=<job_id>
 ```
 
-`remote_status` 靠它把 tmux 会话识别为 fleet 任务。缺少该变量的会话对 `remote_stop_job` 不可见——这是上游的安全边界，不得放宽。
+上游的 `remote_status`（本插件为 `orca_status`）靠它把 tmux 会话识别为 fleet 任务。缺少该变量的会话对 `remote_stop_job` 不可见——这是上游的安全边界，不得放宽。
 
 ## 4. session 命名
 
 `[A-Za-z0-9][A-Za-z0-9_.-]{0,79}`，且 `tmux has-session -t =<session>` 精确匹配（前缀匹配会误杀同前缀会话）。
+
+工具命名对照见 [naming.md](naming.md)；本文件出现的 `remote_*` 一律指**上游工具名**，不得改动。
 
 ## 允许的扩展
 
@@ -51,7 +53,7 @@ remote_fleet_job_id=<job_id>
 同一台测试机上双向验证：
 
 1. **DSH → 上游**：本插件 `launch` 一个任务，上游 CLI `status` 必须能看见并读到 exit code。
-2. **上游 → DSH**：上游 CLI `launch` 一个任务，本插件 `remote_status` 必须能看见。
+2. **上游 → DSH**：上游 CLI `launch` 一个任务，本插件 `orca_status` 必须能看见。
 3. **跨前端停止**：本插件能停上游登记的任务，反之亦然（job identity 校验通过后）。
 
 三条全过，才允许合并。任何一次改动涉及上述四项时，必须重跑。

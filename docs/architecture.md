@@ -54,10 +54,10 @@ DSH 只依赖本地 Node；远端只有 Python 标准库、OpenSSH、tmux。
 
 ## 数据流
 
-**status**：`index.js` → `engine cli status` → SSH → 远端读数 → 压缩投影 → 模型。
-**run**：参数校验 → policy 判定 → `engine cli run` → 进程组超时 → 有界输出。
-**patch**：read 取 sha256 → guard 校验 → 后端选择（git / 影子目录 / codex）→ 回滚点。
-**launch**：登记 job → tmux + `remote_fleet_job_id` → 写 status 旁挂 → 返回 job id → 投影到 DSH Jobs。
+**status**：`orca_status` → `engine cli status` → SSH → 远端读数 → 压缩投影 → 模型。
+**run**：`orca_run` 参数校验 → policy 判定 → `engine cli run` → 进程组超时 → 有界输出。
+**patch**：`orca_patch` 先 read 取 sha256 → guard 校验 → 后端选择（git / 影子目录 / codex）→ 回滚点。
+**launch**：`orca_launch` 登记 job → tmux + `remote_fleet_job_id` → 写 status 旁挂 → 返回 job id → 投影到 DSH Jobs。
 
 ## 关键决策
 

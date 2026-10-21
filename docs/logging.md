@@ -5,14 +5,17 @@
 ## 布局
 
 ```
-runs/exp001/
-  meta.json                # 命令、host、user、git sha、起止、exit code（一次性）
-  status.json              # 原子替换的当前状态（与上游同名旁挂文件兼容）
-  events.ndjson            # 结构化事件：{ts, level, stream, msg}
-  events-0001.ndjson.gz    # 轮转后压缩
-  tail.ring                # 最近 N 行归一化文本，定长重写 ← 专供 tail
-  raw/exp001.tee.log       # 原始保真，保留不动
+runs/exp001/logs/raw/
+  exp001.tee.log                          # 原始输出（上游 tee，保真）
+  exp001.tee.log.remote-fleet-status.json # 协议：与上游共用，字段只增不改
+  exp001.tee.log.orca/                    # 本插件自有，上游不认识会忽略
+    meta.json                             # 命令、host、user、git sha、起止、exit code
+    events.ndjson                         # 结构化事件：{ts, level, stream, msg}
+    events-0001.ndjson.gz                 # 轮转后压缩
+    tail.ring                             # 最近 N 行归一化文本，定长重写 ← 专供 tail
 ```
+
+一个目录管住所有自有产物：**协议文件留在原位不改名，扩展数据全部收进 `<log>.orca/`**，在共用机器上一眼就能看出哪些是本插件写的。
 
 ## 为什么 tail.ring 是重点，而不是压缩比
 
@@ -22,7 +25,7 @@ gzip 无法从尾部随机读。想「看最后 50 行」就得解压整个文�
 
 - 只保留最近 2000 行归一化文本
 - 达到上限后整体重写（原子替换）
-- `remote_status(log_tail_lines=50)` 永远只读它：**几十 KB，不是几百 MB**
+- `orca_status(log_tail_lines=50)` 永远只读它：**几十 KB，不是几百 MB**
 
 压缩只在轮转/结束时做，不放在写热路径上。
 
@@ -47,7 +50,7 @@ gzip 无法从尾部随机读。想「看最后 50 行」就得解压整个文�
 |---|---|---|
 | 任务在跑吗 | `status.json` | ~1 KB |
 | 最后几行 | `tail.ring` | ~50 KB |
-| 找报错 | `remote_grep` 搜 `events.ndjson` | 命中行数 |
+| 找报错 | `orca_grep` 搜 `events.ndjson` | 命中行数 |
 | 复现问题 | `raw/*.tee.log`（显式请求才给） | 大，需分页 |
 
 ## 兼容性红线

@@ -25,6 +25,11 @@ DeepSeek Harness 原生插件：把 [remote-fleet](../remote-fleet) 的远端执
 1. **代码分叉，协议不分裂。** 见 [docs/compatibility.md](docs/compatibility.md)。
 2. **只 cherry-pick，不 merge。** 见 [docs/upstream.md](docs/upstream.md)。
 
+## 命名
+
+工具统一 `orca_` 前缀（`orca_status`、`orca_run`、`orca_patch`…），远端协议名保持不变。
+完整对照见 [docs/naming.md](docs/naming.md)。
+
 ## 非目标
 
 - 不替代 `research-hub`（决定跑什么、跑在哪台）
@@ -37,7 +42,7 @@ DeepSeek Harness 原生插件：把 [remote-fleet](../remote-fleet) 的远端执
 ```
 package.json          bundle 清单（dsh.bundle.patch）
 cordis.patch.yml      插件行声明
-index.js              defineTool、policy、Jobs 投影
+index.js              9 个 orca_* 工具、policy、Jobs 投影
 client.js             Fleet 面板（M6）
 engine/               冻结的 Python 引擎
 docs/                 设计文档
@@ -48,6 +53,7 @@ UPSTREAM.md           冻结点与同步记录
 
 | 文件 | 内容 |
 |---|---|
+| [docs/naming.md](docs/naming.md) | 命名总表、工具对照、冻结区 |
 | [docs/architecture.md](docs/architecture.md) | 组件、数据流、关键决策 |
 | [docs/compatibility.md](docs/compatibility.md) | 必须与上游保持一致的协议 |
 | [docs/policy.md](docs/policy.md) | 免确认策略与审批矩阵 |
