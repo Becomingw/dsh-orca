@@ -1,5 +1,7 @@
 # 上游冻结点
 
+> 2026-10-22：上游 remote-fleet 已升级并改名为 **orca 0.8.0**（`https://git.scosine.org/becomingw/orca.git`，本机 `~/plugins/orca`；MCP 版，供 Codex / Claude / OpenCode），后端能力与本仓库一致；两者代码独立维护，互不依赖。远端协议名两边相同。下表记录的是本仓库冻结时的旧地址与版本。
+
 | 项 | 值 |
 |---|---|
 | 仓库 | https://git.scosine.org/becomingw/remote-fleet.git |
